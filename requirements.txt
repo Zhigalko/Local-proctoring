@@ -1,0 +1,25 @@
+# ==============================================================================
+# Local Proctoring System ("Proctoring CV + Security") Dependencies
+# Tested & Verified on Python 3.10 and 3.11 (Windows x86_64)
+# ==============================================================================
+
+# Computer Vision & Deep Learning
+ultralytics>=8.3.0,<=8.4.173
+torch>=2.1.0,<=2.14.1
+torchvision>=0.16.0,<=0.29.1
+opencv-python>=4.10.0,<=5.0.0.93
+
+# MediaPipe with FaceMesh 468 landmarks & Iris tracking (solutions API)
+mediapipe==0.10.14
+protobuf>=4.25.0,<5.0.0
+
+# Scientific & Image Processing
+numpy>=1.26.0,<3.0.0
+pillow>=11.0.0,<=12.3.0
+
+# Desktop GUI & Embedded Chromium Browser (Kiosk Mode)
+PyQt6>=6.8.0,<=6.11.0
+PyQt6-WebEngine>=6.8.0,<=6.11.0
+
+# Desktop Security & Keyboard Interception
+pynput>=1.8.0,<=1.8.2
