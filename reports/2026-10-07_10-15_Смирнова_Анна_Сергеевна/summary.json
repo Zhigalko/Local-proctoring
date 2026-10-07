@@ -1,0 +1,16 @@
+{
+  "session_id": "2026-10-07_10-15_Смирнова_Анна_Сергеевна",
+  "student_name": "Смирнова Анна Сергеевна",
+  "start_time": "2026-10-07T10:15:00.581261",
+  "end_time": "2026-10-07T10:24:24.581261",
+  "score": "10 / 10",
+  "score_pct": 100,
+  "correct_count": 10,
+  "total_count": 10,
+  "time_spent": "09:24",
+  "total_violations": 0,
+  "status": "CLEAN",
+  "status_ru": "Чисто",
+  "status_color": "#22c55e",
+  "incidents": []
+}

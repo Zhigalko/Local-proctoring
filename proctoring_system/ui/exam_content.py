@@ -691,6 +691,31 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
       background: linear-gradient(135deg, #0369a1, #4338ca);
     }
 
+    .btn-admin-panel {
+      width: 100%;
+      margin-top: 14px;
+      background: transparent;
+      color: #94a3b8;
+      border: 1.5px dashed rgba(56, 189, 248, 0.45);
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-admin-panel:hover {
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
+      border-color: #38bdf8;
+      transform: translateY(-1px);
+    }
+
     .hdr-student-pill {
       background: rgba(30, 41, 59, 0.85);
       border: 1px solid var(--border-color);
@@ -974,6 +999,10 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
 
         <button type="button" class="btn-start-exam" id="btn-start-exam" onclick="submitLoginAndStart()">
           Начать тестирование →
+        </button>
+
+        <button type="button" class="btn-admin-panel" id="btn-open-admin" onclick="openAdminDashboard()">
+          🎓 Панель преподавателя (Admin Dashboard)
         </button>
       </div>
     </div>
@@ -1265,6 +1294,12 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
 
     let studentName = "Студент";
 
+    function openAdminDashboard() {
+      try {
+        window.location.href = "proctor://open_admin";
+      } catch (e) {}
+    }
+
     function submitLoginAndStart() {
       const input = document.getElementById('student-name-input');
       const val = (input && input.value) ? input.value.trim() : "";
@@ -1278,6 +1313,11 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
       if (hdrStudent) hdrStudent.innerText = studentName;
       const resStudent = document.getElementById('res-student-name');
       if (resStudent) resStudent.innerText = studentName;
+
+      // Notify Python proctoring system of student session start
+      try {
+        window.location.href = "proctor://start?name=" + encodeURIComponent(studentName);
+      } catch (e) {}
 
       document.getElementById('login-view').style.display = 'none';
       document.getElementById('exam-header').style.display = 'flex';
@@ -1541,9 +1581,9 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
       document.getElementById('results-view').style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // Signal Python proctoring system that exam is finished so all alerts/locks/popups are silenced
+      // Signal Python proctoring system that exam is finished so session report is saved and all alerts/locks/popups are silenced
       try {
-        window.location.href = "proctor://finished";
+        window.location.href = `proctor://finished?name=${encodeURIComponent(studentName)}&correct=${correctCount}&total=${total}&scorePct=${scorePct}&spent=${encodeURIComponent(spentFmt)}`;
       } catch (e) {}
     }
 

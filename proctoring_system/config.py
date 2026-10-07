@@ -12,11 +12,13 @@ LOGS_DIR = BASE_DIR / "logs"
 INCIDENTS_DIR = LOGS_DIR / "incidents"
 INCIDENTS_JSON = LOGS_DIR / "incidents.jsonl"
 INCIDENTS_CSV = LOGS_DIR / "incidents.csv"
+REPORTS_DIR = BASE_DIR / "reports"
 YOLO_MODEL_PATH = str(BASE_DIR / "yolov8n.pt")
 
 # Ensure required directories exist
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 INCIDENTS_DIR.mkdir(parents=True, exist_ok=True)
+REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Camera / Video stream configuration
 CAMERA_INDEX = 0

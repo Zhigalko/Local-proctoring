@@ -4,6 +4,7 @@ Integrates QWebEngineView for online testing, real-time CV PIP webcam preview,
 visual alert overlays, incident log inspection, and security lockdown.
 """
 
+from datetime import datetime
 from PyQt6.QtCore import Qt, QTimer, QUrl
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
@@ -73,10 +74,14 @@ class MainWindow(QMainWindow):
             flags |= Qt.WindowType.WindowStaysOnTopHint
         self.setWindowFlags(flags)
 
-        # Metrics cache
+        # Metrics cache & Session tracking
         self.total_violations = 0
         self.exam_finished = False
         self.keyboard_locker = None
+        self.session_student_name = "Студент"
+        self.session_start_time = datetime.now()
+        self.session_incidents = []
+        self.admin_window = None
 
         # Build UI layout
         self._init_ui()
@@ -96,6 +101,10 @@ class MainWindow(QMainWindow):
         self.escape_shortcut.activated.connect(self._exit_prompt)
         self.esc_shortcut = QShortcut(QKeySequence("Esc"), self)
         self.esc_shortcut.activated.connect(self._exit_prompt)
+
+        # Admin / Proctor Dashboard shortcut (Ctrl + Shift + A)
+        self.admin_shortcut = QShortcut(QKeySequence("Ctrl+Shift+A"), self)
+        self.admin_shortcut.activated.connect(self._open_admin_dashboard)
 
         # Baseline recalibration shortcut (key 'C')
         self.calib_shortcut = QShortcut(QKeySequence("C"), self)
@@ -202,6 +211,15 @@ class MainWindow(QMainWindow):
             if hasattr(self, "violations_chip") and self.violations_chip:
                 self.violations_chip.setText(f"Инцидентов: {self.total_violations}")
 
+            # Record in active session history
+            self.session_incidents.append({
+                "incident_type": incident_type,
+                "description": description,
+                "severity": severity,
+                "screenshot_path": screenshot_path,
+                "timestamp": datetime.now().isoformat()
+            })
+
             # Non-blocking HUD alert overlay for 2 seconds
             self.alert_banner.show_alert(
                 title=f"НАРУШЕНИЕ: {incident_type}",
@@ -245,6 +263,14 @@ class MainWindow(QMainWindow):
             self.total_violations += 1
             if hasattr(self, "violations_chip") and self.violations_chip:
                 self.violations_chip.setText(f"Инцидентов: {self.total_violations}")
+
+            self.session_incidents.append({
+                "incident_type": IncidentType.FOCUS_LOST.value,
+                "description": "Потеря фокуса окна: попытка переключения на другое приложение",
+                "severity": "CRITICAL",
+                "screenshot_path": "",
+                "timestamp": datetime.now().isoformat()
+            })
         except Exception as e:
             print(f"[MainWindow] Error handling focus lost: {e}")
 
@@ -276,22 +302,55 @@ class MainWindow(QMainWindow):
         dlg.finished.connect(lambda _: self.security_watcher.start())
         dlg.show()
 
+    def _open_admin_dashboard(self):
+        """Opens Admin / Proctor Dashboard window for the instructor."""
+        from proctoring_system.ui.admin_dashboard import AdminDashboardWindow
+        if not hasattr(self, "admin_window") or self.admin_window is None:
+            self.admin_window = AdminDashboardWindow(parent=self)
+        self.admin_window.show()
+        self.admin_window.raise_()
+        self.admin_window.activateWindow()
+
+    def _on_exam_started(self, student_name: str):
+        """Called when student clicks 'Start Exam' on the login screen."""
+        self.session_student_name = student_name or "Студент"
+        self.session_start_time = datetime.now()
+        self.session_incidents = []
+        self.total_violations = 0
+        print(f"[MainWindow] Exam session started for student: {self.session_student_name}")
+
     def _on_web_url_changed(self, url: QUrl):
         """Handle internal navigation and signals from Exam web view."""
         url_str = url.toString()
         if url.scheme() == "proctor" or url_str.startswith("proctor://"):
+            from urllib.parse import urlparse, parse_qs
+            parsed = urlparse(url_str)
+            params = parse_qs(parsed.query)
             host = url.host()
+
             if host == "exit" or "exit" in url_str:
                 print("[MainWindow] Exit requested from Exam interface. Exiting kiosk.")
                 self.close()
+            elif host == "open_admin" or "open_admin" in url_str:
+                self._open_admin_dashboard()
+            elif host == "start" or "start" in url_str:
+                name = params.get("name", ["Студент"])[0]
+                self._on_exam_started(name)
             elif host == "finished" or "finished" in url_str:
-                self._on_exam_finished()
+                try:
+                    correct = int(params.get("correct", [0])[0])
+                    total = int(params.get("total", [10])[0])
+                    score_pct = int(params.get("scorePct", [0])[0])
+                    spent = params.get("spent", ["00:00"])[0]
+                except Exception:
+                    correct, total, score_pct, spent = 0, 10, 0, "00:00"
+                self._on_exam_finished(correct, total, score_pct, spent)
             elif host == "restarted" or "restarted" in url_str:
                 self._on_exam_restarted()
 
-    def _on_exam_finished(self):
-        """Silences all proctoring alerts, lock screens, and warnings after exam ends."""
-        print("[MainWindow] Exam finished signal received. Silencing all alerts and proctoring locks.")
+    def _on_exam_finished(self, correct: int = 0, total: int = 10, score_pct: int = 0, spent: str = "00:00"):
+        """Silences all proctoring alerts, lock screens, archives session report, and updates UI."""
+        print("[MainWindow] Exam finished signal received. Silencing alerts and archiving session.")
         self.exam_finished = True
 
         # Send proctoring violations count to the Web results page
@@ -299,6 +358,22 @@ class MainWindow(QMainWindow):
             self.web_page.runJavaScript(f"setProctoringViolationsCount({self.total_violations});")
         except Exception as e:
             print(f"[MainWindow] Error updating JS proctoring verdict: {e}")
+
+        # Archive session report to reports/<YYYY-MM-DD_HH-MM>_<student_name>/
+        try:
+            from proctoring_system.reports_manager import SessionReportManager
+            SessionReportManager.save_session(
+                student_name=self.session_student_name,
+                start_time=self.session_start_time,
+                end_time=datetime.now(),
+                correct_count=correct,
+                total_count=total,
+                score_pct=score_pct,
+                time_spent=spent,
+                incidents=self.session_incidents
+            )
+        except Exception as e:
+            print(f"[MainWindow] Error archiving session report: {e}")
 
         # Stop security watcher so focus lost doesn't trigger
         if hasattr(self, "security_watcher") and self.security_watcher:

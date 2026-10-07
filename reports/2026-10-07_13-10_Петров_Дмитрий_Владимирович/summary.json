@@ -1,0 +1,73 @@
+{
+  "session_id": "2026-10-07_13-10_Петров_Дмитрий_Владимирович",
+  "student_name": "Петров Дмитрий Владимирович",
+  "start_time": "2026-10-07T13:10:00.581261",
+  "end_time": "2026-10-07T13:16:24.581261",
+  "score": "5 / 10",
+  "score_pct": 50,
+  "correct_count": 5,
+  "total_count": 10,
+  "time_spent": "06:24",
+  "total_violations": 4,
+  "status": "CHEATING",
+  "status_ru": "Подозрение на списывание",
+  "status_color": "#ef4444",
+  "incidents": [
+    {
+      "id": 1,
+      "time": "2026-10-07T13:11:35.581261",
+      "time_code": "01:35",
+      "type": "PHONE_DETECTED",
+      "type_ru": "Обнаружен смартфон",
+      "severity": "CRITICAL",
+      "description": "Обнаружен смартфон в рабочей зоне (уверенность 92%)",
+      "duration_sec": 2.3,
+      "details": {
+        "duration": 2.3
+      },
+      "screenshot": "screenshots/001_phone_detected.jpg"
+    },
+    {
+      "id": 2,
+      "time": "2026-10-07T13:12:40.581261",
+      "time_code": "02:40",
+      "type": "LOOKING_DOWN",
+      "type_ru": "Взгляд опущен вниз (>1.5с)",
+      "severity": "HIGH",
+      "description": "Взгляд опущен вниз на колени: 2.1с",
+      "duration_sec": 2.1,
+      "details": {
+        "duration": 2.1
+      },
+      "screenshot": "screenshots/002_looking_down.jpg"
+    },
+    {
+      "id": 3,
+      "time": "2026-10-07T13:14:00.581261",
+      "time_code": "04:00",
+      "type": "FOCUS_LOST",
+      "type_ru": "Потеря фокуса окна (Alt+Tab / переключение)",
+      "severity": "CRITICAL",
+      "description": "Потеря фокуса окна: попытка переключения на стороннее приложение (Alt+Tab)",
+      "duration_sec": 4.5,
+      "details": {
+        "duration": 4.5
+      },
+      "screenshot": "screenshots/003_focus_lost.jpg"
+    },
+    {
+      "id": 4,
+      "time": "2026-10-07T13:15:10.581261",
+      "time_code": "05:10",
+      "type": "MULTIPLE_FACES",
+      "type_ru": "Второе лицо в кадре",
+      "severity": "CRITICAL",
+      "description": "Обнаружено второе лицо в кадре (подсказчик)",
+      "duration_sec": 2.0,
+      "details": {
+        "duration": 2.0
+      },
+      "screenshot": "screenshots/004_multiple_faces.jpg"
+    }
+  ]
+}
