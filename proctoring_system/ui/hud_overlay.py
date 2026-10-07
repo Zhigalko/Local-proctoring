@@ -16,43 +16,45 @@ from proctoring_system.logger import IncidentRecord, Severity
 
 class CameraPipWidget(QFrame):
     """
-    Floating Picture-in-Picture webcam monitor displaying real-time video feed with CV telemetry.
+    Floating Picture-in-Picture webcam monitor displaying clean video feed with compact Russian status badge.
     """
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedSize(300, 225)
+        self.setFixedSize(240, 175)
         self.setStyleSheet("""
             CameraPipWidget {
                 background-color: #0b1120;
                 border: 2px solid #22c55e;
-                border-radius: 12px;
+                border-radius: 14px;
             }
         """)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(2)
+        layout.setSpacing(4)
 
         # Video frame display label
         self.video_label = QLabel(self)
         self.video_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.video_label.setStyleSheet("border-radius: 8px; background-color: #020617;")
+        self.video_label.setStyleSheet("border-radius: 10px; background-color: #020617;")
         layout.addWidget(self.video_label, stretch=1)
 
-        # Bottom telemetry bar
+        # Bottom status chip bar
         bottom_bar = QHBoxLayout()
-        bottom_bar.setContentsMargins(6, 2, 6, 2)
+        bottom_bar.setContentsMargins(6, 0, 6, 2)
+        bottom_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.status_chip = QLabel("● SECURE", self)
-        self.status_chip.setStyleSheet("color: #22c55e; font-weight: bold; font-size: 11px;")
+        self.status_chip = QLabel("🟢 Всё в норме", self)
+        self.status_chip.setStyleSheet("""
+            color: #4ade80;
+            background-color: rgba(34, 197, 94, 0.15);
+            border-radius: 6px;
+            padding: 2px 10px;
+            font-weight: 700;
+            font-size: 11px;
+        """)
         bottom_bar.addWidget(self.status_chip)
-
-        bottom_bar.addStretch()
-
-        self.telemetry_label = QLabel("FPS: -- | Gaze: --", self)
-        self.telemetry_label.setStyleSheet("color: #94a3b8; font-size: 10px; font-family: monospace;")
-        bottom_bar.addWidget(self.telemetry_label)
 
         layout.addLayout(bottom_bar)
 
@@ -72,8 +74,8 @@ class CameraPipWidget(QFrame):
         except Exception as e:
             print(f"[CameraPipWidget] Error updating frame: {e}")
 
-    def update_status(self, status: str, fps: float, gaze: str, phone: bool):
-        """Update border color and status indicators with state caching to avoid redraw thrashing."""
+    def update_status(self, status: str, fps: float = 0.0, gaze: str = "", phone: bool = False):
+        """Update border color and compact status indicator (🟢 Всё в норме / 🟡 Внимание / 🔴 Нарушение)."""
         try:
             target_state = "VIOLATION" if (status == "VIOLATION" or phone) else status
             if getattr(self, "_last_state", None) != target_state:
@@ -83,33 +85,69 @@ class CameraPipWidget(QFrame):
                         CameraPipWidget {
                             background-color: #0b1120;
                             border: 2px solid #ef4444;
-                            border-radius: 12px;
+                            border-radius: 14px;
                         }
                     """)
-                    self.status_chip.setText("● VIOLATION")
-                    self.status_chip.setStyleSheet("color: #ef4444; font-weight: bold; font-size: 11px;")
+                    self.status_chip.setText("🔴 Нарушение")
+                    self.status_chip.setStyleSheet("""
+                        color: #f87171;
+                        background-color: rgba(239, 68, 68, 0.2);
+                        border-radius: 6px;
+                        padding: 2px 10px;
+                        font-weight: 800;
+                        font-size: 11px;
+                    """)
                 elif target_state == "WARNING":
                     self.setStyleSheet("""
                         CameraPipWidget {
                             background-color: #0b1120;
                             border: 2px solid #f59e0b;
-                            border-radius: 12px;
+                            border-radius: 14px;
                         }
                     """)
-                    self.status_chip.setText("● WARNING")
-                    self.status_chip.setStyleSheet("color: #f59e0b; font-weight: bold; font-size: 11px;")
+                    self.status_chip.setText("🟡 Внимание")
+                    self.status_chip.setStyleSheet("""
+                        color: #fbbf24;
+                        background-color: rgba(245, 158, 11, 0.2);
+                        border-radius: 6px;
+                        padding: 2px 10px;
+                        font-weight: 700;
+                        font-size: 11px;
+                    """)
+                elif target_state == "FINISHED":
+                    self.setStyleSheet("""
+                        CameraPipWidget {
+                            background-color: #0b1120;
+                            border: 2px solid #64748b;
+                            border-radius: 14px;
+                        }
+                    """)
+                    self.status_chip.setText("⚪ Тест завершен")
+                    self.status_chip.setStyleSheet("""
+                        color: #94a3b8;
+                        background-color: rgba(148, 163, 184, 0.15);
+                        border-radius: 6px;
+                        padding: 2px 10px;
+                        font-weight: 700;
+                        font-size: 11px;
+                    """)
                 else:
                     self.setStyleSheet("""
                         CameraPipWidget {
                             background-color: #0b1120;
                             border: 2px solid #22c55e;
-                            border-radius: 12px;
+                            border-radius: 14px;
                         }
                     """)
-                    self.status_chip.setText("● SECURE")
-                    self.status_chip.setStyleSheet("color: #22c55e; font-weight: bold; font-size: 11px;")
-
-            self.telemetry_label.setText(f"FPS: {fps:.0f} | Gaze: {gaze}")
+                    self.status_chip.setText("🟢 Всё в норме")
+                    self.status_chip.setStyleSheet("""
+                        color: #4ade80;
+                        background-color: rgba(34, 197, 94, 0.15);
+                        border-radius: 6px;
+                        padding: 2px 10px;
+                        font-weight: 700;
+                        font-size: 11px;
+                    """)
         except Exception as e:
             print(f"[CameraPipWidget] Error updating status: {e}")
 

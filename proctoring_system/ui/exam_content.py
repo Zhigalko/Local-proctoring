@@ -567,6 +567,180 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
     }
 
     /* ------------------------------------------------------------- */
+    /* LOGIN (TITLE) VIEW STYLING                                    */
+    /* ------------------------------------------------------------- */
+    #login-view {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 80px);
+      padding: 30px 20px;
+    }
+
+    .login-card {
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+      border: 1px solid var(--border-color);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 35px rgba(56, 189, 248, 0.12);
+      border-radius: 20px;
+      padding: 44px 40px;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+    .login-icon {
+      font-size: 50px;
+      margin-bottom: 12px;
+      line-height: 1;
+    }
+
+    .login-title {
+      font-size: 23px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .login-subtitle {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 26px;
+      line-height: 1.5;
+    }
+
+    .login-field-group {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+
+    .login-field-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--accent-blue);
+      margin-bottom: 8px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .login-input {
+      width: 100%;
+      background: #090d16;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px 18px;
+      color: #ffffff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .login-input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+      background: #0d1527;
+    }
+
+    .login-info-box {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 26px;
+      text-align: left;
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    .login-info-box ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .login-info-box li {
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-start-exam {
+      width: 100%;
+      background: linear-gradient(135deg, #0284c7, #4f46e5);
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 28px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.4);
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-start-exam:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 26px rgba(2, 132, 199, 0.6);
+      background: linear-gradient(135deg, #0369a1, #4338ca);
+    }
+
+    .hdr-student-pill {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hdr-q-pill {
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .proctor-verdict {
+      padding: 14px 22px;
+      border-radius: 12px;
+      font-size: 14.5px;
+      font-weight: 700;
+      margin: 16px auto 24px;
+      max-width: 620px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .proctor-verdict.passed {
+      background-color: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.45);
+      color: #86efac;
+    }
+
+    .proctor-verdict.failed {
+      background-color: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      color: #fca5a5;
+    }
+
+    /* ------------------------------------------------------------- */
     /* RESULTS SCREEN STYLING                                        */
     /* ------------------------------------------------------------- */
     #results-view {
@@ -760,22 +934,52 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
   </style>
 </head>
 <body oncontextmenu="return false;">
-  <header>
+  <header id="exam-header" style="display: none;">
     <div class="brand">
       <div class="brand-logo">🛡️</div>
       <div class="brand-title">
-        <h1>Local proctoring</h1>
-        <p>Тестирование: Компьютерное зрение & Системы ИИ (10 вопросов)</p>
+        <h1>Система локального прокторинга</h1>
+        <p>Тестирование: Компьютерное зрение & Системы ИИ</p>
       </div>
     </div>
+    <div class="hdr-student-pill">
+      <span>👤</span> <strong id="hdr-student-name">Студент</strong>
+    </div>
     <div class="exam-meta">
+      <div class="hdr-q-pill">Вопрос <strong id="hdr-q-curr">1</strong> из <strong id="hdr-q-total">10</strong></div>
       <div class="timer-pill" id="timer">⏱️ 15:00</div>
     </div>
   </header>
 
   <main>
-    <!-- ACTIVE EXAM CONTAINER -->
-    <div id="exam-view">
+    <!-- 1. LOGIN / TITLE SCREEN -->
+    <div id="login-view">
+      <div class="login-card">
+        <div class="login-icon">🛡️</div>
+        <h1 class="login-title">Система локального прокторинга</h1>
+        <p class="login-subtitle">Автоматизированный мониторинг и защита экзаменационного процесса</p>
+
+        <div class="login-field-group">
+          <label class="login-field-label" for="student-name-input">ФИО студента (тестируемого):</label>
+          <input type="text" id="student-name-input" class="login-input" placeholder="Введите фамилию, имя и отчество..." autofocus autocomplete="off">
+        </div>
+
+        <div class="login-info-box">
+          <ul>
+            <li>⏱️ <strong>Регламент:</strong> 15 минут на прохождение 10 вопросов</li>
+            <li>📷 <strong>Прокторинг:</strong> Анализ взгляда, положения головы и детекция устройств</li>
+            <li>🔒 <strong>Безопасность:</strong> Полноэкранный режим с контролем фокуса окна</li>
+          </ul>
+        </div>
+
+        <button type="button" class="btn-start-exam" id="btn-start-exam" onclick="submitLoginAndStart()">
+          Начать тестирование →
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. ACTIVE EXAM CONTAINER -->
+    <div id="exam-view" style="display: none;">
       <!-- Fast Question Navigation Pills (1 to 10) -->
       <div class="jump-bar" id="jump-bar"></div>
 
@@ -796,19 +1000,28 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
       <!-- Navigation buttons -->
       <div class="nav-buttons">
         <div class="nav-left">
-          <button class="btn btn-prev" id="btn-prev" onclick="prevQuestion()">← Назад</button>
+          <button class="btn btn-prev" id="btn-prev" onclick="prevQuestion()">← Предыдущий</button>
         </div>
-        <div class="nav-right">
-          <button class="btn btn-next" id="btn-next" onclick="nextQuestion()">Далее →</button>
+        <div class="nav-right" style="display: flex; gap: 12px;">
+          <button class="btn btn-next" id="btn-next" onclick="nextQuestion()">Следующий →</button>
+          <button class="btn btn-finish-red" id="btn-finish" onclick="openFinishConfirmModal()">Завершить 🏁</button>
         </div>
       </div>
     </div>
 
-    <!-- EXAM RESULTS CONTAINER -->
-    <div id="results-view">
+    <!-- 3. EXAM RESULTS CONTAINER -->
+    <div id="results-view" style="display: none;">
       <div class="results-hero">
+        <div style="font-size: 15px; color: #94a3b8; margin-bottom: 8px;">
+          Студент: <strong id="res-student-name" style="color: #f8fafc; font-size: 16px;">Студент</strong>
+        </div>
         <div class="hero-score-badge" id="res-score-text">0 / 10</div>
         <div class="hero-status-tag" id="res-status-tag">ТЕСТ СДАН</div>
+
+        <!-- Proctoring Verdict -->
+        <div class="proctor-verdict passed" id="res-proctor-verdict">
+          🟢 <strong>Прокторинг: Тест сдан честно</strong> — нарушений регламента не зафиксировано
+        </div>
 
         <div class="results-stats-row">
           <div class="stat-card">
@@ -831,7 +1044,7 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
 
         <div class="results-exit-container">
           <button class="btn-exit-app" onclick="exitExam()">
-            🚪 Выйти из тестирования (Закрыть)
+            🚪 Выйти из программы
           </button>
           <button class="btn btn-prev" onclick="restartExam()" style="padding: 14px 24px; font-size: 15px;">
             🔄 Пройти заново
@@ -847,7 +1060,7 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
 
       <div style="text-align: center; margin: 30px 0;">
         <button class="btn-exit-app" onclick="exitExam()">
-          🚪 Выйти из тестирования (Закрыть)
+          🚪 Выйти из программы
         </button>
       </div>
     </div>
@@ -1050,10 +1263,51 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
       }
     }
 
+    let studentName = "Студент";
+
+    function submitLoginAndStart() {
+      const input = document.getElementById('student-name-input');
+      const val = (input && input.value) ? input.value.trim() : "";
+      if (val.length > 0) {
+        studentName = val;
+      } else {
+        studentName = "Студент (Демо)";
+      }
+
+      const hdrStudent = document.getElementById('hdr-student-name');
+      if (hdrStudent) hdrStudent.innerText = studentName;
+      const resStudent = document.getElementById('res-student-name');
+      if (resStudent) resStudent.innerText = studentName;
+
+      document.getElementById('login-view').style.display = 'none';
+      document.getElementById('exam-header').style.display = 'flex';
+      document.getElementById('exam-view').style.display = 'block';
+
+      renderQuestion();
+      startTimer();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setProctoringViolationsCount(count) {
+      const verdictEl = document.getElementById('res-proctor-verdict');
+      if (!verdictEl) return;
+      if (count === 0) {
+        verdictEl.className = 'proctor-verdict passed';
+        verdictEl.innerHTML = '🟢 <strong>Прокторинг: Тест сдан честно</strong> — нарушений регламента не зафиксировано';
+      } else {
+        verdictEl.className = 'proctor-verdict failed';
+        verdictEl.innerHTML = `🔴 <strong>Прокторинг: Зафиксированы нарушения (${count})</strong> — зарегистрированы отклонения от регламента`;
+      }
+    }
+
     function renderQuestion() {
       const q = questions[currentIndex];
       document.getElementById('q-curr').innerText = currentIndex + 1;
       document.getElementById('q-total').innerText = questions.length;
+      const hdrCurr = document.getElementById('hdr-q-curr');
+      if (hdrCurr) hdrCurr.innerText = currentIndex + 1;
+      const hdrTotal = document.getElementById('hdr-q-total');
+      if (hdrTotal) hdrTotal.innerText = questions.length;
       document.getElementById('p-bar').style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
 
       document.getElementById('btn-prev').disabled = (currentIndex === 0);
@@ -1066,7 +1320,7 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
         btnNext.onclick = confirmFinishExam;
         btnNext.disabled = false;
       } else {
-        btnNext.innerHTML = 'Далее →';
+        btnNext.innerHTML = 'Следующий →';
         btnNext.className = 'btn btn-next';
         btnNext.onclick = nextQuestion;
         btnNext.disabled = false;
@@ -1281,6 +1535,8 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
       document.getElementById('review-cards-list').innerHTML = reviewHtml;
 
       // Switch view
+      const examHeader = document.getElementById('exam-header');
+      if (examHeader) examHeader.style.display = 'none';
       document.getElementById('exam-view').style.display = 'none';
       document.getElementById('results-view').style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1309,6 +1565,8 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
       selectedAnswers = {};
       currentIndex = 0;
       document.getElementById('results-view').style.display = 'none';
+      const examHeader = document.getElementById('exam-header');
+      if (examHeader) examHeader.style.display = 'flex';
       document.getElementById('exam-view').style.display = 'block';
       startTimer();
       renderQuestion();
@@ -1326,9 +1584,18 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
       }
     });
 
-    // Start exam
-    renderQuestion();
-    startTimer();
+    // Enter key listener on student name input & autofocus
+    window.addEventListener('DOMContentLoaded', () => {
+      const input = document.getElementById('student-name-input');
+      if (input) {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            submitLoginAndStart();
+          }
+        });
+        setTimeout(() => input.focus(), 200);
+      }
+    });
   </script>
 
   <!-- IN-PAGE CONFIRMATION MODAL (NO BROWSER POPUPS) -->

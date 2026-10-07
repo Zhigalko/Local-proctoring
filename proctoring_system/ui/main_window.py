@@ -102,18 +102,14 @@ class MainWindow(QMainWindow):
         self.calib_shortcut.activated.connect(self._trigger_recalibration)
 
     def _init_ui(self):
-        """Create central widget and all overlay layers."""
+        """Create central widget and all overlay layers with clean, modern layout."""
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
         self.central_layout = QVBoxLayout(self.central_widget)
         self.central_layout.setContentsMargins(0, 0, 0, 0)
         self.central_layout.setSpacing(0)
 
-        # 1. Top HUD Status Bar
-        self.top_bar = self._create_top_bar()
-        self.central_layout.addWidget(self.top_bar)
-
-        # 2. Main Exam Browser View
+        # 1. Main Exam Browser View (occupies full screen)
         self.web_view = QWebEngineView(self)
         self.web_page = ProctorWebEnginePage(self, self.web_view)
         self.web_view.setPage(self.web_page)
@@ -123,217 +119,16 @@ class MainWindow(QMainWindow):
         self.web_view.urlChanged.connect(self._on_web_url_changed)
         self.central_layout.addWidget(self.web_view, stretch=1)
 
-        # 3. Hackathon Demo Toolbar (Bottom bar for judges and demonstration)
-        self.demo_toolbar = self._create_demo_toolbar()
-        self.central_layout.addWidget(self.demo_toolbar)
-
-        # 4. Floating Camera PiP Widget (anchored bottom-right)
+        # 2. Floating Camera PiP Widget (anchored bottom-right with compact status indicator)
         self.pip_widget = CameraPipWidget(self)
         self.pip_widget.show()
 
-        # 5. Alert Banner Overlay (anchored top-center)
+        # 3. Alert Banner Overlay (anchored top-center)
         self.alert_banner = AlertBannerOverlay(self)
 
-        # 6. Focus Lost Security Curtain (covers entire window)
+        # 4. Focus Lost Security Curtain (covers entire window)
         self.focus_lock = FocusLostLockOverlay(self)
         self.focus_lock.resumed.connect(self._on_focus_lock_resumed)
-
-    def _create_top_bar(self) -> QWidget:
-        bar = QFrame(self)
-        bar.setFixedHeight(54)
-        bar.setStyleSheet("""
-            QFrame {
-                background-color: #0b1120;
-                border-bottom: 2px solid #1e293b;
-            }
-        """)
-
-        layout = QHBoxLayout(bar)
-        layout.setContentsMargins(20, 0, 20, 0)
-        layout.setSpacing(16)
-
-        # Application Title / Brand Header
-        self.app_title = QLabel("Local proctoring", bar)
-        self.app_title.setStyleSheet("color: #38bdf8; font-weight: 800; font-size: 14px; letter-spacing: 0.03em;")
-        layout.addWidget(self.app_title)
-
-        # Live Proctor Badge
-        self.badge_status = QLabel("● АКТИВЕН", bar)
-        self.badge_status.setStyleSheet("color: #22c55e; font-weight: 700; font-size: 12px; letter-spacing: 0.05em;")
-        layout.addWidget(self.badge_status)
-
-        # Overall Status Chip
-        self.status_chip = QLabel("СТАТУС: В НОРМЕ", bar)
-        self.status_chip.setStyleSheet("""
-            background-color: rgba(34, 197, 94, 0.15);
-            color: #22c55e;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 6px;
-            padding: 4px 10px;
-            font-weight: 700;
-            font-size: 12px;
-        """)
-        layout.addWidget(self.status_chip)
-
-        # Violations Count Chip
-        self.violations_chip = QLabel("Инцидентов: 0", bar)
-        self.violations_chip.setStyleSheet("""
-            background-color: #1e293b;
-            color: #f8fafc;
-            border-radius: 6px;
-            padding: 4px 12px;
-            font-weight: 700;
-            font-size: 12px;
-        """)
-        layout.addWidget(self.violations_chip)
-        layout.addStretch()
-
-        # Button: Auto-Calibrate Baseline
-        self.calib_btn = QPushButton("🎯 Автокалибровка (C)", bar)
-        self.calib_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.calib_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #0369a1;
-                color: #f0f9ff;
-                border: 1px solid #38bdf8;
-                border-radius: 6px;
-                padding: 6px 14px;
-                font-size: 12px;
-                font-weight: 700;
-            }
-            QPushButton:hover {
-                background-color: #0284c7;
-            }
-        """)
-        self.calib_btn.clicked.connect(self._trigger_recalibration)
-        layout.addWidget(self.calib_btn)
-
-        # Button: Open Incident Log
-        self.log_btn = QPushButton("📋 Журнал нарушений", bar)
-        self.log_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.log_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #1e293b;
-                color: #38bdf8;
-                border: 1px solid #334155;
-                border-radius: 6px;
-                padding: 6px 14px;
-                font-size: 12px;
-                font-weight: 600;
-            }
-            QPushButton:hover {
-                background-color: #334155;
-            }
-        """)
-        self.log_btn.clicked.connect(self._show_incident_dialog)
-        layout.addWidget(self.log_btn)
-
-        # Button: Exit (No password required)
-        self.exit_btn = QPushButton("🚪 Выход", bar)
-        self.exit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.exit_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #7f1d1d;
-                color: #fecaca;
-                border: 1px solid #ef4444;
-                border-radius: 6px;
-                padding: 6px 14px;
-                font-size: 12px;
-                font-weight: 700;
-            }
-            QPushButton:hover {
-                background-color: #991b1b;
-            }
-        """)
-        self.exit_btn.clicked.connect(self._exit_prompt)
-        layout.addWidget(self.exit_btn)
-
-        return bar
-
-    def _create_demo_toolbar(self) -> QWidget:
-        """Interactive test bar for judges to test scenarios on demand."""
-        bar = QFrame(self)
-        bar.setFixedHeight(46)
-        bar.setStyleSheet("""
-            QFrame {
-                background-color: #0f172a;
-                border-top: 1px solid #334155;
-            }
-        """)
-
-        layout = QHBoxLayout(bar)
-        layout.setContentsMargins(16, 4, 16, 4)
-        layout.setSpacing(10)
-
-        demo_label = QLabel("⚡ ДЕМО-СИМУЛЯЦИЯ:", bar)
-        demo_label.setStyleSheet("color: #e2e8f0; font-weight: 800; font-size: 11px;")
-        layout.addWidget(demo_label)
-
-        btn_style = """
-            QPushButton {
-                background-color: #1e293b;
-                color: #cbd5e1;
-                border: 1px solid #334155;
-                border-radius: 4px;
-                padding: 4px 10px;
-                font-size: 11px;
-                font-weight: 600;
-            }
-            QPushButton:hover {
-                background-color: #38bdf8;
-                color: #0f172a;
-            }
-        """
-
-        sim_phone_btn = QPushButton("📱 Смартфон", bar)
-        sim_phone_btn.setStyleSheet(btn_style)
-        sim_phone_btn.clicked.connect(lambda: self._set_simulation_mode("PHONE"))
-        layout.addWidget(sim_phone_btn)
-
-        sim_noface_btn = QPushButton("👤 Уход со стула", bar)
-        sim_noface_btn.setStyleSheet(btn_style)
-        sim_noface_btn.clicked.connect(lambda: self._set_simulation_mode("NO_FACE"))
-        layout.addWidget(sim_noface_btn)
-
-        sim_multi_btn = QPushButton("👥 2-й человек", bar)
-        sim_multi_btn.setStyleSheet(btn_style)
-        sim_multi_btn.clicked.connect(lambda: self._set_simulation_mode("MULTIPLE_FACES"))
-        layout.addWidget(sim_multi_btn)
-
-        sim_away_btn = QPushButton("➡️ Поворот головы", bar)
-        sim_away_btn.setStyleSheet(btn_style)
-        sim_away_btn.clicked.connect(lambda: self._set_simulation_mode("LOOKING_AWAY"))
-        layout.addWidget(sim_away_btn)
-
-        sim_down_btn = QPushButton("⬇️ Взгляд вниз", bar)
-        sim_down_btn.setStyleSheet(btn_style)
-        sim_down_btn.clicked.connect(lambda: self._set_simulation_mode("LOOKING_DOWN"))
-        layout.addWidget(sim_down_btn)
-
-        sim_reset_btn = QPushButton("🔄 Сброс симуляции", bar)
-        sim_reset_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #22c55e;
-                color: #0f172a;
-                border-radius: 4px;
-                padding: 4px 10px;
-                font-size: 11px;
-                font-weight: 700;
-            }
-            QPushButton:hover {
-                background-color: #16a34a;
-            }
-        """)
-        sim_reset_btn.clicked.connect(lambda: self._set_simulation_mode(None))
-        layout.addWidget(sim_reset_btn)
-
-        layout.addStretch()
-
-        help_label = QLabel("Разблокировка: Ctrl+Alt+Shift+F12 (пароль: proctor2026)", bar)
-        help_label.setStyleSheet("color: #64748b; font-size: 11px;")
-        layout.addWidget(help_label)
-
-        return bar
 
     def resizeEvent(self, event):
         """Keep PiP, banner, and curtain sized and positioned correctly."""
@@ -344,23 +139,22 @@ class MainWindow(QMainWindow):
         w = self.width()
         h = self.height()
 
-        # Position PiP widget at bottom right (above demo toolbar)
+        # Position PiP widget at bottom-right corner
         pip_w, pip_h = self.pip_widget.width(), self.pip_widget.height()
-        self.pip_widget.move(w - pip_w - 24, h - pip_h - 60)
+        self.pip_widget.move(w - pip_w - 20, h - pip_h - 20)
 
-        # Position Alert Banner at top center
+        # Position Alert Banner at top-center
         banner_w = min(720, w - 80)
-        self.alert_banner.setGeometry((w - banner_w) // 2, 54, banner_w, 64)
+        self.alert_banner.setGeometry((w - banner_w) // 2, 20, banner_w, 64)
 
         # Position Focus Lost lock to cover the full window
         self.focus_lock.setGeometry(0, 0, w, h)
 
     def _on_status_updated(self, metrics: dict):
-        """Update top bar status badge and telemetry readouts with state caching."""
+        """Update PiP camera status badge."""
         if getattr(self, "exam_finished", False):
             try:
-                fps = metrics.get("fps", 0.0)
-                self.pip_widget.update_status("NORMAL", fps, "CENTER", False)
+                self.pip_widget.update_status("FINISHED", 0.0, "CENTER", False)
             except Exception:
                 pass
             return
@@ -373,43 +167,16 @@ class MainWindow(QMainWindow):
             # Update PiP widget
             self.pip_widget.update_status(status, fps, gaze, phone)
 
-            # Update top status chip (only re-style when state changes to avoid QSS overhead)
-            target_chip_state = "VIOLATION" if (status == "VIOLATION" or phone) else status
-            if getattr(self, "_last_chip_state", None) != target_chip_state:
-                self._last_chip_state = target_chip_state
-                if target_chip_state == "VIOLATION":
-                    self.status_chip.setText("СТАТУС: НАРУШЕНИЕ!")
-                    self.status_chip.setStyleSheet("""
-                        background-color: rgba(239, 68, 68, 0.2);
-                        color: #ef4444;
-                        border: 1px solid #ef4444;
-                        border-radius: 6px;
-                        padding: 4px 10px;
-                        font-weight: 800;
-                        font-size: 12px;
-                    """)
-                elif target_chip_state == "WARNING":
-                    self.status_chip.setText("СТАТУС: ПРЕДУПРЕЖДЕНИЕ")
-                    self.status_chip.setStyleSheet("""
-                        background-color: rgba(245, 158, 11, 0.2);
-                        color: #f59e0b;
-                        border: 1px solid #f59e0b;
-                        border-radius: 6px;
-                        padding: 4px 10px;
-                        font-weight: 700;
-                        font-size: 12px;
-                    """)
-                else:
-                    self.status_chip.setText("СТАТУС: В НОРМЕ")
-                    self.status_chip.setStyleSheet("""
-                        background-color: rgba(34, 197, 94, 0.15);
-                        color: #22c55e;
-                        border: 1px solid rgba(34, 197, 94, 0.3);
-                        border-radius: 6px;
-                        padding: 4px 10px;
-                        font-weight: 700;
-                        font-size: 12px;
-                    """)
+            if hasattr(self, "status_chip") and self.status_chip:
+                target_chip_state = "VIOLATION" if (status == "VIOLATION" or phone) else status
+                if getattr(self, "_last_chip_state", None) != target_chip_state:
+                    self._last_chip_state = target_chip_state
+                    if target_chip_state == "VIOLATION":
+                        self.status_chip.setText("СТАТУС: НАРУШЕНИЕ!")
+                    elif target_chip_state == "WARNING":
+                        self.status_chip.setText("СТАТУС: ПРЕДУПРЕЖДЕНИЕ")
+                    else:
+                        self.status_chip.setText("СТАТУС: В НОРМЕ")
 
         except Exception as e:
             print(f"[MainWindow] Error in _on_status_updated: {e}")
@@ -432,17 +199,8 @@ class MainWindow(QMainWindow):
             return
         try:
             self.total_violations += 1
-            self.violations_chip.setText(f"Инцидентов: {self.total_violations}")
-            if getattr(self, "_violations_chip_styled", False) is False:
-                self._violations_chip_styled = True
-                self.violations_chip.setStyleSheet("""
-                    background-color: #7f1d1d;
-                    color: #fecaca;
-                    border-radius: 6px;
-                    padding: 4px 12px;
-                    font-weight: 800;
-                    font-size: 12px;
-                """)
+            if hasattr(self, "violations_chip") and self.violations_chip:
+                self.violations_chip.setText(f"Инцидентов: {self.total_violations}")
 
             # Non-blocking HUD alert overlay for 2 seconds
             self.alert_banner.show_alert(
@@ -485,7 +243,8 @@ class MainWindow(QMainWindow):
                 details={"window_state": "deactivated"}
             )
             self.total_violations += 1
-            self.violations_chip.setText(f"Инцидентов: {self.total_violations}")
+            if hasattr(self, "violations_chip") and self.violations_chip:
+                self.violations_chip.setText(f"Инцидентов: {self.total_violations}")
         except Exception as e:
             print(f"[MainWindow] Error handling focus lost: {e}")
 
@@ -535,6 +294,12 @@ class MainWindow(QMainWindow):
         print("[MainWindow] Exam finished signal received. Silencing all alerts and proctoring locks.")
         self.exam_finished = True
 
+        # Send proctoring violations count to the Web results page
+        try:
+            self.web_page.runJavaScript(f"setProctoringViolationsCount({self.total_violations});")
+        except Exception as e:
+            print(f"[MainWindow] Error updating JS proctoring verdict: {e}")
+
         # Stop security watcher so focus lost doesn't trigger
         if hasattr(self, "security_watcher") and self.security_watcher:
             self.security_watcher.stop()
@@ -556,25 +321,9 @@ class MainWindow(QMainWindow):
         if hasattr(self, "focus_lock") and self.focus_lock:
             self.focus_lock.hide()
 
-        # Update HUD chips to show completed state
-        if hasattr(self, "badge_status") and self.badge_status:
-            self.badge_status.setText("● ЗАВЕРШЕН")
-            self.badge_status.setStyleSheet("color: #94a3b8; font-weight: 700; font-size: 12px; letter-spacing: 0.05em;")
-
-        if hasattr(self, "status_chip") and self.status_chip:
-            self.status_chip.setText("СТАТУС: ТЕСТ ЗАВЕРШЕН")
-            self.status_chip.setStyleSheet("""
-                background-color: rgba(56, 189, 248, 0.15);
-                color: #38bdf8;
-                border: 1px solid rgba(56, 189, 248, 0.3);
-                border-radius: 6px;
-                padding: 4px 10px;
-                font-weight: 700;
-                font-size: 12px;
-            """)
-
+        # Update PiP widget to finished status
         if hasattr(self, "pip_widget") and self.pip_widget:
-            self.pip_widget.update_status("NORMAL", 0.0, "CENTER", False)
+            self.pip_widget.update_status("FINISHED", 0.0, "CENTER", False)
 
     def _on_exam_restarted(self):
         """Restores proctoring monitoring if the student restarts the exam."""
@@ -593,21 +342,8 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 print(f"[MainWindow] Error starting keyboard locker: {e}")
 
-        if hasattr(self, "badge_status") and self.badge_status:
-            self.badge_status.setText("● АКТИВЕН")
-            self.badge_status.setStyleSheet("color: #22c55e; font-weight: 700; font-size: 12px; letter-spacing: 0.05em;")
-
-        if hasattr(self, "status_chip") and self.status_chip:
-            self.status_chip.setText("СТАТУС: В НОРМЕ")
-            self.status_chip.setStyleSheet("""
-                background-color: rgba(34, 197, 94, 0.15);
-                color: #22c55e;
-                border: 1px solid rgba(34, 197, 94, 0.3);
-                border-radius: 6px;
-                padding: 4px 10px;
-                font-weight: 700;
-                font-size: 12px;
-            """)
+        if hasattr(self, "pip_widget") and self.pip_widget:
+            self.pip_widget.update_status("NORMAL", 0.0, "CENTER", False)
 
     def _exit_prompt(self):
         """Prompt to confirm exit from kiosk without requiring any password."""
@@ -634,6 +370,20 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         """Gracefully cleanup threads and security hooks on exit."""
-        self.security_watcher.stop()
-        self.vision_worker.stop()
+        print("[MainWindow] Closing window and terminating all child workers...")
+        if hasattr(self, "security_watcher") and self.security_watcher:
+            try:
+                self.security_watcher.stop()
+            except Exception as e:
+                print(f"[MainWindow] Error stopping security watcher: {e}")
+        if hasattr(self, "keyboard_locker") and self.keyboard_locker:
+            try:
+                self.keyboard_locker.stop()
+            except Exception as e:
+                print(f"[MainWindow] Error stopping keyboard locker: {e}")
+        if hasattr(self, "vision_worker") and self.vision_worker:
+            try:
+                self.vision_worker.stop()
+            except Exception as e:
+                print(f"[MainWindow] Error stopping vision worker: {e}")
         event.accept()

@@ -220,12 +220,19 @@ class KeyboardLocker:
         time.sleep(0.05)
 
     def stop(self):
-        """Stop keyboard locker and unhook."""
+        """Stop keyboard locker and unhook immediately."""
         self.is_active = False
-        if self.thread_id:
+        if self.thread_id and user32:
             # Post WM_QUIT (0x0012) to exit message loop
             user32.PostThreadMessageW(self.thread_id, 0x0012, 0, 0)
+        if self.hook_id and user32:
+            try:
+                user32.UnhookWindowsHookEx(self.hook_id)
+            except Exception:
+                pass
+            self.hook_id = None
         if self.thread and self.thread.is_alive():
             self.thread.join(timeout=1.0)
         self.thread = None
         self.thread_id = None
+        print("[KeyboardLocker] Keyboard hook uninstalled and thread stopped.")

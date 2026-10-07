@@ -152,9 +152,10 @@ class VisionWorker(QThread):
         self._release_camera()
 
     def stop(self):
-        """Signal thread to terminate and wait."""
+        """Signal thread to terminate, release camera, and wait."""
         self.is_running = False
-        self.wait(2000)
+        self._release_camera()
+        self.wait(1000)
 
     def trigger_simulation_mode(self, mode: str | None):
         """Allows testing anomaly scenarios on demand."""
@@ -237,6 +238,45 @@ class VisionWorker(QThread):
             }
 
         # ----------------------------------------------------
+        # Simulation override for Demo mode (if active)
+        # ----------------------------------------------------
+        if self.sim_anomaly_mode == "NO_FACE":
+            face_result.is_no_face = True
+            face_result.face_count = 0
+            face_result.head_pose = None
+        elif self.sim_anomaly_mode == "MULTIPLE_FACES":
+            face_result.is_no_face = False
+            face_result.is_multiple_faces = True
+            face_result.face_count = 2
+        elif self.sim_anomaly_mode == "LOOKING_AWAY" and (face_result.head_pose is None or not face_result.head_pose.is_looking_away):
+            from proctoring_system.vision.head_gaze_tracker import HeadPose
+            face_result.is_no_face = False
+            face_result.head_pose = HeadPose(
+                yaw=45.0, pitch=0.0, roll=0.0,
+                delta_yaw=45.0, delta_pitch=0.0, delta_roll=0.0,
+                nose_2d=(320, 240),
+                axis_x_2d=(380, 240), axis_y_2d=(320, 300), axis_z_2d=(430, 240),
+                nose_proj_2d=(430, 240),
+                is_looking_away=True, is_looking_down=False,
+                is_calibrated=True
+            )
+        elif self.sim_anomaly_mode == "LOOKING_DOWN" and (face_result.head_pose is None or not face_result.head_pose.is_looking_down):
+            from proctoring_system.vision.head_gaze_tracker import HeadPose
+            face_result.is_no_face = False
+            face_result.head_pose = HeadPose(
+                yaw=0.0, pitch=-35.0, roll=0.0,
+                delta_yaw=0.0, delta_pitch=-35.0, delta_roll=0.0,
+                nose_2d=(320, 240),
+                axis_x_2d=(380, 240), axis_y_2d=(320, 300), axis_z_2d=(320, 340),
+                nose_proj_2d=(320, 340),
+                is_looking_away=False, is_looking_down=True,
+                is_calibrated=True
+            )
+        elif self.sim_anomaly_mode == "PHONE":
+            det_result.is_phone_violation = True
+            det_result.max_phone_conf = 0.92
+
+        # ----------------------------------------------------
         # Anomaly 1: No Face Detected (Student left desk)
         # ----------------------------------------------------
         if face_result.is_no_face:
@@ -276,34 +316,6 @@ class VisionWorker(QThread):
                 overall_status = "WARNING" if overall_status != "VIOLATION" else overall_status
         else:
             self.timers.multiple_faces_start = None
-
-        # ----------------------------------------------------
-        # Simulation override for Demo mode (if active)
-        # ----------------------------------------------------
-        if self.sim_anomaly_mode == "LOOKING_AWAY" and (face_result.head_pose is None or not face_result.head_pose.is_looking_away):
-            from proctoring_system.vision.head_gaze_tracker import HeadPose
-            face_result.is_no_face = False
-            face_result.head_pose = HeadPose(
-                yaw=45.0, pitch=0.0, roll=0.0,
-                delta_yaw=45.0, delta_pitch=0.0, delta_roll=0.0,
-                nose_2d=(320, 240),
-                axis_x_2d=(380, 240), axis_y_2d=(320, 300), axis_z_2d=(430, 240),
-                nose_proj_2d=(430, 240),
-                is_looking_away=True, is_looking_down=False,
-                is_calibrated=True
-            )
-        elif self.sim_anomaly_mode == "LOOKING_DOWN" and (face_result.head_pose is None or not face_result.head_pose.is_looking_down):
-            from proctoring_system.vision.head_gaze_tracker import HeadPose
-            face_result.is_no_face = False
-            face_result.head_pose = HeadPose(
-                yaw=0.0, pitch=-35.0, roll=0.0,
-                delta_yaw=0.0, delta_pitch=-35.0, delta_roll=0.0,
-                nose_2d=(320, 240),
-                axis_x_2d=(380, 240), axis_y_2d=(320, 300), axis_z_2d=(320, 340),
-                nose_proj_2d=(320, 340),
-                is_looking_away=False, is_looking_down=True,
-                is_calibrated=True
-            )
 
         # ----------------------------------------------------
         # Anomaly 3: Head Pose Tracking (Yaw > 25° / < -25° or Pitch < -20°)
@@ -497,12 +509,7 @@ class VisionWorker(QThread):
                 chip_color = (0, 200, 50)
 
             # Top border / indicator bar
-            cv2.rectangle(frame, (0, 0), (w, 5), top_bar_color, -1)
-
-            # Status chip
-            cv2.rectangle(frame, (10, 8), (180, 32), (20, 20, 20), -1)
-            cv2.circle(frame, (22, 20), 5, chip_color, -1)
-            cv2.putText(frame, status_text, (34, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.rectangle(frame, (0, 0), (w, 4), top_bar_color, -1)
 
             # Continuous Violation Progress Bar & Countdown Timer (Head turn, Gaze away, Phone)
             active_timer_start = None
