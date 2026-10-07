@@ -4,6 +4,8 @@ Integrates QWebEngineView for online testing, real-time CV PIP webcam preview,
 visual alert overlays, incident log inspection, and security lockdown.
 """
 
+import json
+import base64
 from datetime import datetime
 from PyQt6.QtCore import Qt, QTimer, QUrl
 from PyQt6.QtWidgets import (
@@ -385,7 +387,6 @@ class MainWindow(QMainWindow):
 
         # Archive session report to reports/<YYYY-MM-DD_HH-MM>_<student_name>/
         try:
-            import base64
             from proctoring_system.reports_manager import SessionReportManager
             session_dir = SessionReportManager.save_session(
                 student_name=self.session_student_name,
