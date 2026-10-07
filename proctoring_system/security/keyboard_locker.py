@@ -106,7 +106,7 @@ class KeyboardLocker:
         """Check if modifier key is currently pressed."""
         return (user32.GetAsyncKeyState(vk) & 0x8000) != 0
 
-    def _hook_callback(self, n_code: int, w_param: wintypes.WPARAM, l_param: wintypes.LPARAM) -> LRESULT:
+    def _hook_callback(self, n_code: int, w_param: wintypes.WPARAM, l_param: wintypes.LPARAM) -> int:
         if n_code < 0:
             return user32.CallNextHookEx(self.hook_id, n_code, w_param, l_param)
 
