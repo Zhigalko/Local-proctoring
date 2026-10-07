@@ -956,6 +956,340 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
     .review-explanation strong {
       color: var(--accent-blue);
     }
+
+    /* ------------------------------------------------------------- */
+    /* RESULTS TABS & INCIDENTS APPEAL STYLING                       */
+    /* ------------------------------------------------------------- */
+    .results-tab-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .res-tab-btn {
+      background-color: #1e293b;
+      color: #94a3b8;
+      border: 1px solid var(--border-color);
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .res-tab-btn:hover {
+      color: #f8fafc;
+      background-color: #334155;
+    }
+
+    .res-tab-btn.active {
+      background-color: #0284c7;
+      color: #ffffff;
+      border-color: #38bdf8;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+    }
+
+    .incidents-clean-card {
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.1), rgba(15, 23, 42, 0.8));
+      border: 1px dashed rgba(34, 197, 94, 0.4);
+      border-radius: 14px;
+      padding: 32px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .incidents-alert-banner {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 10px;
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      font-size: 13.5px;
+      color: #fde68a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .incident-appeal-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--danger);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 18px;
+      transition: all 0.2s ease;
+    }
+
+    .incident-appeal-card.attention {
+      border-left-color: var(--warning);
+    }
+
+    .incident-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .inc-type-tag {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .inc-sev-tag {
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .inc-sev-tag.critical {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .inc-sev-tag.high, .inc-sev-tag.medium {
+      background-color: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .incident-card-body {
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+    }
+
+    .incident-thumb {
+      width: 150px;
+      height: 100px;
+      background-color: #020617;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      object-fit: cover;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .incident-thumb:hover {
+      transform: scale(1.03);
+      border-color: #38bdf8;
+    }
+
+    .incident-info-col {
+      flex: 1;
+    }
+
+    .incident-desc {
+      font-size: 14px;
+      color: #e2e8f0;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .incident-meta-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .meta-sub-pill {
+      background: #0f172a;
+      border: 1px solid #334155;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .appeal-action-area {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(51, 65, 85, 0.6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn-appeal {
+      background: linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(99, 102, 241, 0.25));
+      color: #38bdf8;
+      border: 1.5px solid rgba(56, 189, 248, 0.55);
+      border-radius: 8px;
+      padding: 9px 20px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-appeal:hover {
+      background: rgba(56, 189, 248, 0.3);
+      border-color: #38bdf8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+    }
+
+    .appeal-box {
+      background-color: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px 16px;
+      width: 100%;
+    }
+
+    .appeal-box.pending {
+      border-color: rgba(245, 158, 11, 0.5);
+      background-color: rgba(245, 158, 11, 0.08);
+    }
+
+    .appeal-box.approved {
+      border-color: rgba(34, 197, 94, 0.5);
+      background-color: rgba(34, 197, 94, 0.08);
+    }
+
+    .appeal-box.rejected {
+      border-color: rgba(239, 68, 68, 0.5);
+      background-color: rgba(239, 68, 68, 0.08);
+    }
+
+    .appeal-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .appeal-badge.pending {
+      background-color: rgba(245, 158, 11, 0.25);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.5);
+    }
+
+    .appeal-badge.approved {
+      background-color: rgba(34, 197, 94, 0.25);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.5);
+    }
+
+    .appeal-badge.rejected {
+      background-color: rgba(239, 68, 68, 0.25);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+
+    .appeal-meta {
+      font-size: 12.5px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    /* Modal Form Styles */
+    .appeal-modal-card {
+      max-width: 620px;
+      width: 90%;
+      text-align: left;
+    }
+
+    .btn-close-modal {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    .btn-close-modal:hover {
+      color: #f8fafc;
+    }
+
+    .appeal-image-container {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 8px;
+      text-align: center;
+      margin: 12px 0 18px;
+    }
+
+    .appeal-image-container img {
+      max-height: 230px;
+      max-width: 100%;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .appeal-form-group {
+      margin-bottom: 16px;
+    }
+
+    .appeal-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    .appeal-select {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .appeal-select:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+
+    .appeal-textarea {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+      outline: none;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .appeal-textarea:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
   </style>
 </head>
 <body oncontextmenu="return false;">
@@ -1081,11 +1415,37 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
         </div>
       </div>
 
-      <div class="review-title">
-        <span>📋 Подробный разбор каждого вопроса:</span>
+      <!-- Results Tab Bar: Incidents & Appeals / Review -->
+      <div class="results-tab-bar">
+        <button type="button" class="res-tab-btn active" id="tab-incidents-btn" onclick="switchResultsTab('incidents')">
+          🛡️ Протокол нарушений и апелляция (<span id="res-incidents-count">0</span>)
+        </button>
+        <button type="button" class="res-tab-btn" id="tab-review-btn" onclick="switchResultsTab('review')">
+          📋 Разбор ответов теста (10)
+        </button>
       </div>
 
-      <div id="review-cards-list"></div>
+      <!-- TAB 1: Incidents & Appeals -->
+      <div id="incidents-tab-content">
+        <div id="incidents-empty-card" class="incidents-clean-card" style="display: none;">
+          <div style="font-size: 32px; margin-bottom: 8px;">🟢</div>
+          <div style="font-size: 17px; font-weight: 800; color: #4ade80;">Тестирование пройдено без нарушений!</div>
+          <div style="color: #94a3b8; font-size: 13.5px; margin-top: 4px;">Система прокторинга не зафиксировала отклонений от регламента. Подача апелляции не требуется.</div>
+        </div>
+        <div id="incidents-alert-banner" class="incidents-alert-banner" style="display: none;">
+          <span>ℹ️</span>
+          <span>Вы можете оспорить зафиксированные нарушения регламента и прикрепить пояснение для преподавателя до закрытия программы.</span>
+        </div>
+        <div id="incidents-list-container"></div>
+      </div>
+
+      <!-- TAB 2: Question Review -->
+      <div id="review-tab-content" style="display: none;">
+        <div class="review-title">
+          <span>📋 Подробный разбор каждого вопроса:</span>
+        </div>
+        <div id="review-cards-list"></div>
+      </div>
 
       <div style="text-align: center; margin: 30px 0;">
         <button class="btn-exit-app" onclick="exitExam()">
@@ -1600,7 +1960,10 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
     function restartExam() {
       examFinishedHandled = false;
       examFinished = false;
+      activeIncidentsList = [];
+      currentAppealingIncidentId = null;
       closeConfirmModal();
+      closeAppealModal();
       timeRemaining = TOTAL_TIME_SECONDS;
       selectedAnswers = {};
       currentIndex = 0;
@@ -1615,6 +1978,272 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
       try {
         window.location.href = "proctor://restarted";
       } catch (e) {}
+    }
+
+    // -------------------------------------------------------------
+    // INCIDENTS PROTOCOL & STUDENT APPEAL JAVASCRIPT
+    // -------------------------------------------------------------
+    let activeIncidentsList = [];
+    let currentAppealingIncidentId = null;
+
+    function escapeHtml(text) {
+      if (!text) return "";
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function switchResultsTab(tab) {
+      const btnIncidents = document.getElementById('tab-incidents-btn');
+      const btnReview = document.getElementById('tab-review-btn');
+      const contentIncidents = document.getElementById('incidents-tab-content');
+      const contentReview = document.getElementById('review-tab-content');
+
+      if (tab === 'incidents') {
+        if (btnIncidents) btnIncidents.className = 'res-tab-btn active';
+        if (btnReview) btnReview.className = 'res-tab-btn';
+        if (contentIncidents) contentIncidents.style.display = 'block';
+        if (contentReview) contentReview.style.display = 'none';
+      } else {
+        if (btnIncidents) btnIncidents.className = 'res-tab-btn';
+        if (btnReview) btnReview.className = 'res-tab-btn active';
+        if (contentIncidents) contentIncidents.style.display = 'none';
+        if (contentReview) contentReview.style.display = 'block';
+      }
+    }
+
+    function loadExamIncidents(incidents) {
+      activeIncidentsList = incidents || [];
+      const countEl = document.getElementById('res-incidents-count');
+      if (countEl) countEl.innerText = activeIncidentsList.length;
+
+      setProctoringViolationsCount(activeIncidentsList.length);
+      renderIncidentsList();
+
+      if (activeIncidentsList.length > 0) {
+        switchResultsTab('incidents');
+      } else {
+        switchResultsTab('review');
+      }
+    }
+
+    function renderIncidentsList() {
+      const emptyCard = document.getElementById('incidents-empty-card');
+      const alertBanner = document.getElementById('incidents-alert-banner');
+      const container = document.getElementById('incidents-list-container');
+      if (!container) return;
+
+      if (!activeIncidentsList || activeIncidentsList.length === 0) {
+        if (emptyCard) emptyCard.style.display = 'block';
+        if (alertBanner) alertBanner.style.display = 'none';
+        container.innerHTML = '';
+        return;
+      }
+
+      if (emptyCard) emptyCard.style.display = 'none';
+      if (alertBanner) alertBanner.style.display = 'flex';
+
+      let html = '';
+      activeIncidentsList.forEach((inc, idx) => {
+        const incId = inc.incident_id || `inc_${idx+1}`;
+        const timeCode = inc.time_code || '00:00';
+        const typeRu = inc.type_ru || inc.type || 'Инцидент';
+        const dur = inc.duration_sec ? `${inc.duration_sec} сек` : '1.5 сек';
+        const sev = (inc.severity || 'HIGH').toUpperCase();
+        const sevClass = (sev === 'CRITICAL') ? 'critical' : 'high';
+        const desc = inc.description || '';
+        const shotSrc = inc.screenshot_b64 || inc.screenshot || '';
+
+        let appealAreaHtml = '';
+        if (!inc.appeal || !inc.appeal.status || inc.appeal.status === 'none') {
+          appealAreaHtml = `
+            <div class="appeal-action-area">
+              <div style="color: #94a3b8; font-size: 12.5px;">Считаете фиксацию ошибочной? Вы можете оспорить данный инцидент:</div>
+              <button type="button" class="btn-appeal" onclick="openAppealModal('${incId}')">
+                ⚖️ Оспорить / Подать апелляцию
+              </button>
+            </div>
+          `;
+        } else if (inc.appeal.status === 'pending') {
+          appealAreaHtml = `
+            <div class="appeal-action-area">
+              <div class="appeal-box pending">
+                <span class="appeal-badge pending">На рассмотрении ⏳</span>
+                <div class="appeal-meta">
+                  <div><strong>Причина:</strong> ${escapeHtml(inc.appeal.reason)}</div>
+                  ${inc.appeal.comment ? `<div><strong>Пояснение:</strong> ${escapeHtml(inc.appeal.comment)}</div>` : ''}
+                  <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Подана в ${inc.appeal.submitted_at || ''} • Ожидает решения преподавателя</div>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (inc.appeal.status === 'approved') {
+          appealAreaHtml = `
+            <div class="appeal-action-area">
+              <div class="appeal-box approved">
+                <span class="appeal-badge approved">✅ Апелляция удовлетворена</span>
+                <div class="appeal-meta">
+                  <div><strong>Причина:</strong> ${escapeHtml(inc.appeal.reason)}</div>
+                  <div style="color: #86efac; margin-top: 4px;"><strong>Вердикт преподавателя:</strong> ${escapeHtml(inc.appeal.teacher_comment || 'Нарушение аннулировано')}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (inc.appeal.status === 'rejected') {
+          appealAreaHtml = `
+            <div class="appeal-action-area">
+              <div class="appeal-box rejected">
+                <span class="appeal-badge rejected">❌ Апелляция отклонена</span>
+                <div class="appeal-meta">
+                  <div><strong>Причина:</strong> ${escapeHtml(inc.appeal.reason)}</div>
+                  <div style="color: #fca5a5; margin-top: 4px;"><strong>Комментарий преподавателя:</strong> ${escapeHtml(inc.appeal.teacher_comment || 'Апелляция не принята')}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        const thumbHtml = shotSrc
+          ? `<img src="${shotSrc}" class="incident-thumb" alt="Доказательство" onclick="openAppealModal('${incId}')" title="Кликните для просмотра крупно" />`
+          : `<div class="incident-thumb" style="display:flex;align-items:center;justify-content:center;color:#64748b;font-size:11px;">Нет фото</div>`;
+
+        html += `
+          <div class="incident-appeal-card">
+            <div class="incident-card-top">
+              <div class="inc-type-tag">
+                <span>⚠️</span>
+                <span>${idx + 1}. ${escapeHtml(typeRu)}</span>
+              </div>
+              <span class="inc-sev-tag ${sevClass}">${sev}</span>
+            </div>
+            <div class="incident-card-body">
+              ${thumbHtml}
+              <div class="incident-info-col">
+                <div class="incident-desc">${escapeHtml(desc)}</div>
+                <div class="incident-meta-pills">
+                  <span class="meta-sub-pill">⏱️ Таймкод: ${timeCode}</span>
+                  <span class="meta-sub-pill">⏳ Длительность: ${dur}</span>
+                  <span class="meta-sub-pill">🆔 ${incId}</span>
+                </div>
+              </div>
+            </div>
+            ${appealAreaHtml}
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function openAppealModal(incId) {
+      const inc = activeIncidentsList.find(item => (item.incident_id === incId || String(item.id) === String(incId)));
+      if (!inc) return;
+
+      currentAppealingIncidentId = inc.incident_id || incId;
+      const subtitleEl = document.getElementById('appeal-modal-subtitle');
+      if (subtitleEl) {
+        subtitleEl.innerText = `${inc.type_ru || inc.type} • ⏱️ ${inc.time_code || '00:00'} (Длительность: ${inc.duration_sec || 1.5}с)`;
+      }
+
+      const imgEl = document.getElementById('appeal-modal-img');
+      const shot = inc.screenshot_b64 || inc.screenshot || '';
+      if (imgEl) {
+        if (shot) {
+          imgEl.src = shot;
+          imgEl.style.display = 'inline-block';
+        } else {
+          imgEl.style.display = 'none';
+        }
+      }
+
+      const commentInput = document.getElementById('appeal-comment-input');
+      if (commentInput) {
+        if (inc.appeal && inc.appeal.comment) {
+          commentInput.value = inc.appeal.comment;
+        } else {
+          commentInput.value = '';
+        }
+      }
+
+      const reasonSelect = document.getElementById('appeal-reason-select');
+      if (reasonSelect) {
+        if (inc.appeal && inc.appeal.reason) {
+          reasonSelect.value = inc.appeal.reason;
+        } else {
+          reasonSelect.selectedIndex = 0;
+        }
+      }
+
+      const submitBtn = document.getElementById('btn-submit-appeal');
+      if (submitBtn) {
+        if (inc.appeal && inc.appeal.status === 'pending') {
+          submitBtn.innerText = 'Обновить апелляцию 📤';
+        } else {
+          submitBtn.innerText = 'Отправить апелляцию 📤';
+        }
+      }
+
+      const modal = document.getElementById('appeal-modal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeAppealModal() {
+      const modal = document.getElementById('appeal-modal');
+      if (modal) modal.style.display = 'none';
+      currentAppealingIncidentId = null;
+    }
+
+    function submitAppeal() {
+      if (!currentAppealingIncidentId) return;
+
+      const reasonEl = document.getElementById('appeal-reason-select');
+      const commentEl = document.getElementById('appeal-comment-input');
+      const reason = reasonEl ? reasonEl.value : 'Другая причина';
+      const comment = commentEl ? commentEl.value.trim() : '';
+
+      if (!comment) {
+        alert('Пожалуйста, укажите пояснение ситуации перед отправкой апелляции.');
+        if (commentEl) commentEl.focus();
+        return;
+      }
+
+      // Optimistic update
+      const nowStr = new Date().toLocaleTimeString('ru-RU');
+      const appealData = {
+        status: 'pending',
+        reason: reason,
+        comment: comment,
+        submitted_at: nowStr,
+        teacher_comment: ''
+      };
+
+      activeIncidentsList.forEach(inc => {
+        if (inc.incident_id === currentAppealingIncidentId || String(inc.id) === String(currentAppealingIncidentId)) {
+          inc.appeal = appealData;
+        }
+      });
+
+      renderIncidentsList();
+      closeAppealModal();
+
+      // Dispatch to Python backend via proctor:// scheme
+      try {
+        const url = `proctor://appeal?id=${encodeURIComponent(currentAppealingIncidentId)}&reason=${encodeURIComponent(reason)}&comment=${encodeURIComponent(comment)}`;
+        window.location.href = url;
+      } catch (e) {}
+    }
+
+    function updateIncidentAppealStatus(incidentId, appealData) {
+      if (!activeIncidentsList) return;
+      activeIncidentsList.forEach(inc => {
+        if (inc.incident_id === incidentId || String(inc.id) === String(incidentId)) {
+          inc.appeal = appealData;
+        }
+      });
+      renderIncidentsList();
     }
 
     // Keyboard navigation prevention (no copy/paste, only arrows)
@@ -1647,6 +2276,45 @@ EXAM_HTML_CONTENT = """<!DOCTYPE html>
       <div class="modal-actions">
         <button type="button" class="btn-modal-cancel" onclick="closeConfirmModal()">Вернуться к вопросам</button>
         <button type="button" class="btn-modal-confirm" id="btn-modal-confirm" onclick="executeFinishExam()">Завершить тест</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IN-PAGE APPEAL MODAL -->
+  <div id="appeal-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card appeal-modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <div>
+          <h2 class="modal-title" style="text-align: left; font-size: 18px; margin-bottom: 4px;">⚖️ Подача апелляции на нарушение</h2>
+          <p class="modal-desc" style="text-align: left; margin-bottom: 0;" id="appeal-modal-subtitle">Инцидент #1 • ⏱️ 02:15</p>
+        </div>
+        <button type="button" class="btn-close-modal" onclick="closeAppealModal()">✕</button>
+      </div>
+
+      <!-- Large screenshot preview -->
+      <div class="appeal-image-container">
+        <img id="appeal-modal-img" src="" alt="Скриншот нарушения" />
+      </div>
+
+      <div class="appeal-form-group">
+        <label class="appeal-label" for="appeal-reason-select">Типовая причина апелляции:</label>
+        <select id="appeal-reason-select" class="appeal-select">
+          <option value="Посмотрел на клавиатуру / в черновик">Посмотрел на клавиатуру / в черновик</option>
+          <option value="Ложное срабатывание (в руке был предмет, а не телефон)">Ложное срабатывание (в руке был предмет, а не телефон)</option>
+          <option value="Посторонний шум / помеха в комнате">Посторонний шум / помеха в комнате</option>
+          <option value="Технический сбой камеры / освещения">Технический сбой камеры / освещения</option>
+          <option value="Другая причина">Другая причина</option>
+        </select>
+      </div>
+
+      <div class="appeal-form-group">
+        <label class="appeal-label" for="appeal-comment-input">Подробное пояснение ситуации:</label>
+        <textarea id="appeal-comment-input" class="appeal-textarea" placeholder="Опишите подробности инцидента, чтобы преподаватель мог учесть контекст (например, что именно вы делали в этот момент)..." rows="4"></textarea>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 18px;">
+        <button type="button" class="btn-modal-cancel" onclick="closeAppealModal()">Отмена</button>
+        <button type="button" class="btn-modal-confirm primary" id="btn-submit-appeal" onclick="submitAppeal()">Отправить апелляцию 📤</button>
       </div>
     </div>
   </div>

@@ -22,12 +22,25 @@ from proctoring_system.reports_manager import SessionReportManager
 
 
 class ImagePreviewModal(QDialog):
-    """Full-resolution modal viewer for incident screenshots."""
+    """Full-resolution modal viewer for incident screenshots with appeal review capabilities."""
 
-    def __init__(self, image_path: str, title: str, details_text: str, parent=None):
+    def __init__(
+        self,
+        image_path: str,
+        title: str,
+        details_text: str,
+        incident_data: Optional[Dict[str, Any]] = None,
+        session_folder: Optional[Path] = None,
+        on_reviewed_callback=None,
+        parent=None
+    ):
         super().__init__(parent)
-        self.setWindowTitle(f"Фотофиксация нарушения — {title}")
-        self.setMinimumSize(780, 580)
+        self.incident_data = incident_data or {}
+        self.session_folder = session_folder
+        self.on_reviewed_callback = on_reviewed_callback
+
+        self.setWindowTitle(f"Просмотр инцидента и апелляции — {title}")
+        self.setMinimumSize(820, 680)
         self.setStyleSheet("""
             QDialog {
                 background-color: #0b1120;
@@ -86,7 +99,7 @@ class ImagePreviewModal(QDialog):
             pix = QPixmap(image_path)
             if not pix.isNull():
                 self.img_label.setPixmap(pix.scaled(
-                    740, 480,
+                    760, 400,
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation
                 ))
@@ -98,6 +111,174 @@ class ImagePreviewModal(QDialog):
             self.img_label.setStyleSheet("color: #94a3b8; font-size: 14px;")
 
         layout.addWidget(self.img_label, stretch=1)
+
+        # Appeal and Instructor verdict section
+        appeal_frame = self._build_appeal_section()
+        if appeal_frame:
+            layout.addWidget(appeal_frame)
+
+    def _build_appeal_section(self) -> QWidget:
+        frame = QFrame(self)
+        frame.setStyleSheet("""
+            QFrame {
+                background-color: #1e293b;
+                border: 1px solid #334155;
+                border-radius: 10px;
+            }
+        """)
+        f_layout = QVBoxLayout(frame)
+        f_layout.setContentsMargins(14, 12, 14, 12)
+        f_layout.setSpacing(10)
+
+        appeal = self.incident_data.get("appeal")
+        if appeal:
+            # Status header
+            st_layout = QHBoxLayout()
+            app_status = appeal.get("status", "pending")
+            if app_status == "approved":
+                st_badge = "✅ Апелляция студента: Одобрена (Нарушение аннулировано)"
+                st_color = "#4ade80"
+                st_bg = "rgba(34, 197, 94, 0.2)"
+            elif app_status == "rejected":
+                st_badge = "❌ Апелляция студента: Отклонена"
+                st_color = "#f87171"
+                st_bg = "rgba(239, 68, 68, 0.2)"
+            else:
+                st_badge = "⏳ Апелляция студента: На рассмотрении"
+                st_color = "#fbbf24"
+                st_bg = "rgba(245, 158, 11, 0.2)"
+
+            st_lbl = QLabel(st_badge, frame)
+            st_lbl.setStyleSheet(f"color: {st_color}; background: {st_bg}; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 12.5px; border: none;")
+            st_layout.addWidget(st_lbl)
+            st_layout.addStretch()
+
+            sub_time = appeal.get("submitted_at", "")
+            if sub_time:
+                time_lbl = QLabel(f"Подана в {sub_time}", frame)
+                time_lbl.setStyleSheet("color: #94a3b8; font-size: 11.5px; border: none;")
+                st_layout.addWidget(time_lbl)
+            f_layout.addLayout(st_layout)
+
+            # Reason & comment
+            reason_lbl = QLabel(f"<strong>Причина:</strong> {appeal.get('reason', '')}", frame)
+            reason_lbl.setStyleSheet("color: #f8fafc; font-size: 13px; border: none;")
+            f_layout.addWidget(reason_lbl)
+
+            user_comment = appeal.get("comment", "")
+            if user_comment:
+                comment_lbl = QLabel(f"<strong>Пояснение студента:</strong> <em>«{user_comment}»</em>", frame)
+                comment_lbl.setStyleSheet("color: #cbd5e1; font-size: 12.5px; line-height: 1.4; border: none;")
+                comment_lbl.setWordWrap(True)
+                f_layout.addWidget(comment_lbl)
+
+            # Instructor action row
+            act_layout = QHBoxLayout()
+            act_layout.setSpacing(10)
+
+            self.teacher_comment_input = QLineEdit(frame)
+            self.teacher_comment_input.setPlaceholderText("Комментарий преподавателя (причина решения)...")
+            self.teacher_comment_input.setText(appeal.get("teacher_comment", ""))
+            self.teacher_comment_input.setStyleSheet("""
+                QLineEdit {
+                    background-color: #0f172a;
+                    border: 1px solid #475569;
+                    border-radius: 6px;
+                    padding: 8px 12px;
+                    color: #ffffff;
+                    font-size: 13px;
+                }
+                QLineEdit:focus {
+                    border-color: #38bdf8;
+                }
+            """)
+            act_layout.addWidget(self.teacher_comment_input, stretch=1)
+
+            approve_btn = QPushButton("✅ Одобрить", frame)
+            approve_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            approve_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #166534;
+                    color: #86efac;
+                    border: 1px solid #22c55e;
+                    border-radius: 6px;
+                    padding: 8px 16px;
+                    font-weight: 700;
+                    font-size: 13px;
+                }
+                QPushButton:hover {
+                    background-color: #15803d;
+                }
+            """)
+            approve_btn.clicked.connect(lambda: self._apply_verdict("approved"))
+            act_layout.addWidget(approve_btn)
+
+            reject_btn = QPushButton("❌ Отклонить", frame)
+            reject_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            reject_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #991b1b;
+                    color: #fca5a5;
+                    border: 1px solid #ef4444;
+                    border-radius: 6px;
+                    padding: 8px 16px;
+                    font-weight: 700;
+                    font-size: 13px;
+                }
+                QPushButton:hover {
+                    background-color: #b91c1c;
+                }
+            """)
+            reject_btn.clicked.connect(lambda: self._apply_verdict("rejected"))
+            act_layout.addWidget(reject_btn)
+
+            f_layout.addLayout(act_layout)
+
+        else:
+            # No student appeal yet, but instructor can still excuse false positive
+            no_app_layout = QHBoxLayout()
+            info_lbl = QLabel("ℹ️ Студент не подавал апелляцию на этот инцидент.", frame)
+            info_lbl.setStyleSheet("color: #94a3b8; font-size: 12.5px; border: none;")
+            no_app_layout.addWidget(info_lbl)
+            no_app_layout.addStretch()
+
+            excuse_btn = QPushButton("✅ Аннулировать (Ложное срабатывание)", frame)
+            excuse_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            excuse_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(34, 197, 94, 0.15);
+                    color: #4ade80;
+                    border: 1px solid #22c55e;
+                    border-radius: 6px;
+                    padding: 6px 14px;
+                    font-weight: 700;
+                    font-size: 12px;
+                }
+                QPushButton:hover {
+                    background-color: rgba(34, 197, 94, 0.3);
+                }
+            """)
+            excuse_btn.clicked.connect(lambda: self._apply_verdict("approved", "Аннулировано преподавателем (ложное срабатывание)"))
+            no_app_layout.addWidget(excuse_btn)
+            f_layout.addLayout(no_app_layout)
+
+        return frame
+
+    def _apply_verdict(self, verdict: str, default_comment: str = ""):
+        if not self.session_folder:
+            return
+        inc_id = self.incident_data.get("incident_id") or str(self.incident_data.get("id", ""))
+        comment = ""
+        if hasattr(self, "teacher_comment_input"):
+            comment = self.teacher_comment_input.text().strip()
+        if not comment and default_comment:
+            comment = default_comment
+
+        ok = SessionReportManager.review_appeal(self.session_folder, inc_id, verdict, comment)
+        if ok:
+            if self.on_reviewed_callback:
+                self.on_reviewed_callback()
+            self.accept()
 
 
 class AdminDashboardWindow(QMainWindow):
@@ -443,14 +624,16 @@ class AdminDashboardWindow(QMainWindow):
 
         # View A: Timeline Table
         self.timeline_table = QTableWidget(self.view_container)
-        self.timeline_table.setColumnCount(5)
+        self.timeline_table.setColumnCount(6)
         self.timeline_table.setHorizontalHeaderLabels([
-            "Таймкод", "Тип нарушения", "Уровень", "Длительность", "Описание инцидента"
+            "Таймкод", "Тип нарушения", "Уровень", "Длительность", "Описание инцидента", "Апелляция"
         ])
         self.timeline_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.timeline_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+        self.timeline_table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
         self.timeline_table.setAlternatingRowColors(True)
         self.timeline_table.verticalHeader().setVisible(False)
+        self.timeline_table.cellDoubleClicked.connect(self._on_timeline_row_double_clicked)
         self.timeline_table.setStyleSheet("""
             QTableWidget {
                 background-color: #0f172a;
@@ -626,6 +809,23 @@ class AdminDashboardWindow(QMainWindow):
             top_row.addWidget(name_lbl)
             top_row.addStretch()
 
+            has_pending = any(
+                (inc.get("appeal") and inc["appeal"].get("status") == "pending")
+                for inc in s.get("incidents", [])
+            )
+            if has_pending:
+                app_badge = QLabel("⏳ Апелляция")
+                app_badge.setStyleSheet("""
+                    color: #fbbf24;
+                    background: rgba(245, 158, 11, 0.2);
+                    border: 1px solid rgba(245, 158, 11, 0.45);
+                    border-radius: 4px;
+                    padding: 2px 6px;
+                    font-size: 10.5px;
+                    font-weight: 800;
+                """)
+                top_row.addWidget(app_badge)
+
             status_lbl = QLabel(s.get("status_ru", ""))
             status_color = s.get("status_color", "#94a3b8")
             status_lbl.setStyleSheet(f"""
@@ -751,6 +951,28 @@ class AdminDashboardWindow(QMainWindow):
             desc_item = QTableWidgetItem(inc.get("description", ""))
             self.timeline_table.setItem(row, 4, desc_item)
 
+            # Appeal Column
+            appeal = inc.get("appeal")
+            if appeal:
+                app_status = appeal.get("status", "pending")
+                if app_status == "approved":
+                    app_text = "✅ Одобрена"
+                    app_color = "#4ade80"
+                elif app_status == "rejected":
+                    app_text = "❌ Отклонена"
+                    app_color = "#f87171"
+                else:
+                    app_text = "⏳ На рассмотрении"
+                    app_color = "#fbbf24"
+            else:
+                app_text = "—"
+                app_color = "#64748b"
+
+            app_item = QTableWidgetItem(app_text)
+            app_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            app_item.setForeground(QColor(app_color))
+            self.timeline_table.setItem(row, 5, app_item)
+
         # Fill Gallery Grid
         # Clear existing items
         while self.gallery_layout.count():
@@ -807,9 +1029,25 @@ class AdminDashboardWindow(QMainWindow):
             info_label.setStyleSheet("color: #e2e8f0; font-size: 11px; font-weight: 700;")
             card_layout.addWidget(info_label)
 
-            # Click handler to open full modal
-            def make_click_handler(path=str(shot_full) if shot_full else "", title=inc.get("type_ru", ""), desc=inc.get("description", "")):
-                return lambda event: self._show_image_modal(path, title, desc)
+            # Show appeal status tag on gallery card if present
+            if inc.get("appeal"):
+                app_st = inc["appeal"].get("status", "pending")
+                if app_st == "approved":
+                    b_txt = "✅ Апелляция одобрена"
+                    b_style = "background: rgba(34,197,94,0.25); color: #4ade80; border: 1px solid rgba(34,197,94,0.4);"
+                elif app_st == "rejected":
+                    b_txt = "❌ Апелляция отклонена"
+                    b_style = "background: rgba(239,68,68,0.25); color: #f87171; border: 1px solid rgba(239,68,68,0.4);"
+                else:
+                    b_txt = "⏳ На рассмотрении"
+                    b_style = "background: rgba(245,158,11,0.25); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4);"
+                b_lbl = QLabel(b_txt, card)
+                b_lbl.setStyleSheet(f"border-radius: 4px; padding: 2px 6px; font-size: 10.5px; font-weight: 800; {b_style}")
+                card_layout.addWidget(b_lbl)
+
+            # Click handler to open full modal with appeal review capabilities
+            def make_click_handler(path=str(shot_full) if shot_full else "", title=inc.get("type_ru", ""), desc=inc.get("description", ""), incident_obj=inc):
+                return lambda event: self._show_image_modal(path, title, desc, incident_obj)
 
             card.mousePressEvent = make_click_handler()
 
@@ -817,9 +1055,38 @@ class AdminDashboardWindow(QMainWindow):
             col_i = idx % cols
             self.gallery_layout.addWidget(card, row_i, col_i)
 
-    def _show_image_modal(self, shot_path: str, title: str, details: str):
-        dlg = ImagePreviewModal(shot_path, title, details, self)
+    def _on_timeline_row_double_clicked(self, row: int, col: int):
+        if not self.current_session:
+            return
+        incidents = self.current_session.get("incidents", [])
+        if 0 <= row < len(incidents):
+            inc = incidents[row]
+            session_folder = Path(self.current_session.get("folder_path", ""))
+            shot_rel = inc.get("screenshot", "")
+            shot_full = session_folder / shot_rel if shot_rel else None
+            self._show_image_modal(str(shot_full) if shot_full else "", inc.get("type_ru", ""), inc.get("description", ""), inc)
+
+    def _show_image_modal(self, shot_path: str, title: str, details: str, incident_data: Optional[Dict[str, Any]] = None):
+        session_folder = Path(self.current_session.get("folder_path", "")) if self.current_session else None
+        dlg = ImagePreviewModal(
+            image_path=shot_path,
+            title=title,
+            details_text=details,
+            incident_data=incident_data,
+            session_folder=session_folder,
+            on_reviewed_callback=self._on_appeal_updated,
+            parent=self
+        )
         dlg.exec()
+
+    def _on_appeal_updated(self):
+        curr_folder = self.current_session.get("folder_name") if self.current_session else ""
+        self._load_sessions()
+        if curr_folder:
+            for idx, s in enumerate(self.filtered_sessions):
+                if s.get("folder_name") == curr_folder:
+                    self.sessions_list.setCurrentRow(idx)
+                    break
 
     def _render_empty_detail(self):
         self.hero_student_name.setText("Сессии не найдены")

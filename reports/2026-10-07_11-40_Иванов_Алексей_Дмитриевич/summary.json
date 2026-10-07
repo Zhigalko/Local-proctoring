@@ -25,7 +25,16 @@
       "details": {
         "duration": 1.8
       },
-      "screenshot": "screenshots/001_looking_away.jpg"
+      "screenshot": "screenshots/001_looking_away.jpg",
+      "incident_id": "inc_001",
+      "timestamp": "11:42:25",
+      "appeal": {
+        "status": "pending",
+        "reason": "Посмотрел на клавиатуру / в черновик",
+        "comment": "В этот момент сверял черновик с расчетами матрицы камеры.",
+        "submitted_at": "11:52:10",
+        "teacher_comment": ""
+      }
     },
     {
       "id": 2,
@@ -39,7 +48,9 @@
       "details": {
         "duration": 1.6
       },
-      "screenshot": "screenshots/002_gaze_away.jpg"
+      "screenshot": "screenshots/002_gaze_away.jpg",
+      "incident_id": "inc_002",
+      "timestamp": "11:46:20"
     }
   ]
 }

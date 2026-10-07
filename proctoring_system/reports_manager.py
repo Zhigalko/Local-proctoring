@@ -92,10 +92,12 @@ class SessionReportManager:
             inc_dict = inc.to_dict() if hasattr(inc, "to_dict") else dict(inc)
             inc_type = inc_dict.get("incident_type", "INCIDENT")
             inc_type_ru = INCIDENT_RUSSIAN_NAMES.get(inc_type, inc_type)
+            inc_id = f"inc_{idx+1:03d}"
 
             # Calculate time code relative to session start
             time_code = "00:00"
             duration_sec = 1.5
+            timestamp_str = ""
             try:
                 inc_time_str = inc_dict.get("timestamp", "")
                 if inc_time_str:
@@ -104,11 +106,15 @@ class SessionReportManager:
                     mins = offset_sec // 60
                     secs = offset_sec % 60
                     time_code = f"{mins:02d}:{secs:02d}"
+                    timestamp_str = inc_dt.strftime("%H:%M:%S")
                 details = inc_dict.get("details", {})
                 if isinstance(details, dict) and "duration" in details:
                     duration_sec = float(details["duration"])
             except Exception:
                 pass
+
+            if not timestamp_str:
+                timestamp_str = datetime.now().strftime("%H:%M:%S")
 
             # Copy screenshot into session folder
             orig_shot = inc_dict.get("screenshot_path", "")
@@ -123,7 +129,9 @@ class SessionReportManager:
                     print(f"[SessionReportManager] Error copying screenshot: {e}")
 
             processed_incidents.append({
+                "incident_id": inc_id,
                 "id": idx + 1,
+                "timestamp": timestamp_str,
                 "time": inc_dict.get("timestamp", datetime.now().isoformat()),
                 "time_code": time_code,
                 "type": inc_type,
@@ -132,7 +140,8 @@ class SessionReportManager:
                 "description": inc_dict.get("description", ""),
                 "duration_sec": duration_sec,
                 "details": inc_dict.get("details", {}),
-                "screenshot": target_shot_rel
+                "screenshot": target_shot_rel,
+                "appeal": inc_dict.get("appeal", None)
             })
 
         summary_data = {
@@ -158,6 +167,121 @@ class SessionReportManager:
 
         print(f"[SessionReportManager] Session successfully archived at: {session_dir}")
         return session_dir
+
+    @staticmethod
+    def submit_appeal(session_dir_or_id: Any, incident_id: str, reason: str, comment: str) -> Optional[Dict[str, Any]]:
+        """
+        Saves student appeal on a specific violation incident in summary.json.
+        Returns the updated appeal structure or None if not found.
+        """
+        if isinstance(session_dir_or_id, (str, Path)):
+            target_path = Path(session_dir_or_id)
+            if not target_path.is_dir():
+                target_path = REPORTS_DIR / str(session_dir_or_id)
+        else:
+            return None
+
+        summary_file = target_path / "summary.json"
+        if not summary_file.exists():
+            return None
+
+        try:
+            with open(summary_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            appeal_entry = {
+                "status": "pending",
+                "reason": reason,
+                "comment": comment,
+                "submitted_at": datetime.now().strftime("%H:%M:%S"),
+                "teacher_comment": ""
+            }
+
+            found = False
+            for inc in data.get("incidents", []):
+                if (
+                    inc.get("incident_id") == incident_id
+                    or str(inc.get("id")) == str(incident_id)
+                    or f"inc_{inc.get('id', 0):03d}" == incident_id
+                ):
+                    inc["appeal"] = appeal_entry
+                    found = True
+                    break
+
+            if found:
+                with open(summary_file, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                print(f"[SessionReportManager] Appeal recorded for {incident_id} in {target_path.name}")
+                return appeal_entry
+        except Exception as e:
+            print(f"[SessionReportManager] Error submitting appeal: {e}")
+        return None
+
+    @staticmethod
+    def review_appeal(
+        session_dir_or_id: Any,
+        incident_id: str,
+        new_status: str,
+        teacher_comment: str = ""
+    ) -> bool:
+        """
+        Instructor reviews an appeal: 'approved' | 'rejected'.
+        If approved, incident is marked excused and session status is recalculated.
+        """
+        if isinstance(session_dir_or_id, (str, Path)):
+            target_path = Path(session_dir_or_id)
+            if not target_path.is_dir():
+                target_path = REPORTS_DIR / str(session_dir_or_id)
+        else:
+            return False
+
+        summary_file = target_path / "summary.json"
+        if not summary_file.exists():
+            return False
+
+        try:
+            with open(summary_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            updated = False
+            for inc in data.get("incidents", []):
+                if (
+                    inc.get("incident_id") == incident_id
+                    or str(inc.get("id")) == str(incident_id)
+                    or f"inc_{inc.get('id', 0):03d}" == incident_id
+                ):
+                    if not inc.get("appeal"):
+                        inc["appeal"] = {
+                            "status": new_status,
+                            "reason": "Рассмотрено преподавателем",
+                            "comment": "",
+                            "submitted_at": datetime.now().strftime("%H:%M:%S"),
+                            "teacher_comment": teacher_comment
+                        }
+                    else:
+                        inc["appeal"]["status"] = new_status
+                        inc["appeal"]["teacher_comment"] = teacher_comment
+                    updated = True
+                    break
+
+            if updated:
+                active_violations = sum(
+                    1 for inc in data.get("incidents", [])
+                    if not (inc.get("appeal") and inc["appeal"].get("status") == "approved")
+                )
+                status_key, status_ru, status_color = get_status_info(active_violations)
+                data["effective_violations"] = active_violations
+                data["status"] = status_key
+                data["status_ru"] = status_ru
+                data["status_color"] = status_color
+
+                with open(summary_file, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                print(f"[SessionReportManager] Appeal for {incident_id} reviewed -> {new_status}")
+                return True
+        except Exception as e:
+            print(f"[SessionReportManager] Error reviewing appeal: {e}")
+        return False
 
     @staticmethod
     def list_sessions() -> List[Dict[str, Any]]:
@@ -221,6 +345,29 @@ class SessionReportManager:
                             shot_html = inc["screenshot"]
 
                 sev_color = "#ef4444" if inc.get("severity") in ["CRITICAL", "HIGH"] else "#f59e0b"
+
+                appeal = inc.get("appeal")
+                if appeal:
+                    app_status = appeal.get("status", "pending")
+                    if app_status == "approved":
+                        app_badge = '<span style="background: rgba(34,197,94,0.2); color: #4ade80; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 12px;">✅ Одобрена</span>'
+                    elif app_status == "rejected":
+                        app_badge = '<span style="background: rgba(239,68,68,0.2); color: #f87171; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 12px;">❌ Отклонена</span>'
+                    else:
+                        app_badge = '<span style="background: rgba(245,158,11,0.2); color: #fbbf24; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 12px;">⏳ На рассмотрении</span>'
+
+                    t_comment = f'<div style="color: #94a3b8; font-size: 11px; margin-top: 2px;">Вердикт: {appeal.get("teacher_comment")}</div>' if appeal.get("teacher_comment") else ''
+                    appeal_td = f"""
+                    <td>
+                        {app_badge}
+                        <div style="font-size: 11.5px; color: #cbd5e1; margin-top: 4px;"><strong>Причина:</strong> {appeal.get('reason', '')}</div>
+                        <div style="font-size: 11px; color: #94a3b8;">{appeal.get('comment', '')}</div>
+                        {t_comment}
+                    </td>
+                    """
+                else:
+                    appeal_td = '<td><span style="color: #64748b; font-size: 12px;">— Не подавалась</span></td>'
+
                 incidents_rows += f"""
                 <tr>
                     <td><strong>⏱️ {inc.get('time_code', '00:00')}</strong></td>
@@ -228,12 +375,13 @@ class SessionReportManager:
                     <td><span style="color: {sev_color}; font-weight: 700;">{inc.get('severity', '')}</span></td>
                     <td>{inc.get('duration_sec', 1.5)} сек</td>
                     <td>{inc.get('description', '')}</td>
+                    {appeal_td}
                     <td style="text-align: center;">{shot_html}</td>
                 </tr>
                 """
 
             if not incidents_rows:
-                incidents_rows = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #4ade80;">🟢 В ходе тестирования нарушений регламента не зафиксировано!</td></tr>'
+                incidents_rows = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #4ade80;">🟢 В ходе тестирования нарушений регламента не зафиксировано!</td></tr>'
 
             html_content = f"""<!DOCTYPE html>
 <html lang="ru">
@@ -242,7 +390,7 @@ class SessionReportManager:
 <title>Протокол прокторинга — {data.get('student_name')}</title>
 <style>
   body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #0b1120; color: #f8fafc; margin: 0; padding: 40px 20px; }}
-  .container {{ max-width: 1000px; margin: 0 auto; background-color: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 36px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }}
+  .container {{ max-width: 1050px; margin: 0 auto; background-color: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 36px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }}
   h1 {{ margin: 0 0 10px; color: #38bdf8; font-size: 26px; }}
   .badge {{ display: inline-block; padding: 6px 16px; border-radius: 8px; font-weight: 800; font-size: 14px; background: {data.get('status_color')}; color: #0b1120; }}
   .meta-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 24px 0; background: #0f172a; padding: 20px; border-radius: 12px; border: 1px solid #334155; }}
@@ -259,7 +407,7 @@ class SessionReportManager:
   <div style="display: flex; justify-content: space-between; align-items: center;">
     <div>
       <h1>🛡️ Протокол тестирования с локальным прокторингом</h1>
-      <div style="color: #94a3b8; font-size: 14px;">Система автоматизированного контроля экзамена</div>
+      <div style="color: #94a3b8; font-size: 14px;">Система автоматизированного контроля экзамена и учета апелляций</div>
     </div>
     <div class="badge">{data.get('status_ru', '')}</div>
   </div>
@@ -271,7 +419,7 @@ class SessionReportManager:
     <div class="meta-item"><div class="lbl">Нарушений зафиксировано</div><div class="val" style="color: {data.get('status_color')};">{data.get('total_violations', 0)}</div></div>
   </div>
 
-  <h2 style="font-size: 18px; color: #f8fafc; margin-top: 30px;">📋 Таймлайн зафиксированных инцидентов:</h2>
+  <h2 style="font-size: 18px; color: #f8fafc; margin-top: 30px;">📋 Таймлайн зафиксированных инцидентов и апелляций:</h2>
   <table>
     <thead>
       <tr>
@@ -280,6 +428,7 @@ class SessionReportManager:
         <th>Уровень</th>
         <th>Длительность</th>
         <th>Описание инцидента</th>
+        <th>Апелляция</th>
         <th style="text-align: center;">Доказательство</th>
       </tr>
     </thead>
@@ -302,7 +451,7 @@ class SessionReportManager:
 
     @staticmethod
     def export_session_csv(session_dir: Path, output_file: Path) -> bool:
-        """Exports session incident log to a CSV file."""
+        """Exports session incident log with appeals to a CSV file."""
         try:
             summary_file = session_dir / "summary.json"
             if not summary_file.exists():
@@ -317,14 +466,19 @@ class SessionReportManager:
                 writer.writerow(["TimeSpent", data.get("time_spent", "")])
                 writer.writerow(["Status", data.get("status_ru", "")])
                 writer.writerow([])
-                writer.writerow(["TimeCode", "Type", "Severity", "DurationSec", "Description", "Screenshot"])
+                writer.writerow(["TimeCode", "Type", "Severity", "DurationSec", "Description", "AppealStatus", "AppealReason", "AppealComment", "TeacherComment", "Screenshot"])
                 for inc in data.get("incidents", []):
+                    appeal = inc.get("appeal") or {}
                     writer.writerow([
                         inc.get("time_code", ""),
                         inc.get("type_ru", ""),
                         inc.get("severity", ""),
                         inc.get("duration_sec", ""),
                         inc.get("description", ""),
+                        appeal.get("status", "none"),
+                        appeal.get("reason", ""),
+                        appeal.get("comment", ""),
+                        appeal.get("teacher_comment", ""),
                         inc.get("screenshot", "")
                     ])
             return True
@@ -336,12 +490,77 @@ class SessionReportManager:
     def ensure_demo_sessions():
         """
         Creates 3 realistic demo examination sessions if reports directory is empty,
-        giving judges and teachers immediate rich data to test the Admin Dashboard.
+        or ensures existing demo sessions have appeal records populated.
         """
         REPORTS_DIR.mkdir(parents=True, exist_ok=True)
         existing = [d for d in REPORTS_DIR.iterdir() if d.is_dir() and (d / "summary.json").exists()]
+
+        # If sessions exist, check if we need to backfill appeals/incident_ids
         if existing:
-            return  # Already has sessions
+            for d in existing:
+                try:
+                    s_file = d / "summary.json"
+                    with open(s_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+
+                    updated = False
+                    for idx, inc in enumerate(data.get("incidents", [])):
+                        if "incident_id" not in inc:
+                            inc["incident_id"] = f"inc_{idx+1:03d}"
+                            updated = True
+                        time_str = inc.get("time", "")
+                        try:
+                            if time_str:
+                                inc["timestamp"] = datetime.fromisoformat(time_str).strftime("%H:%M:%S")
+                            else:
+                                inc["timestamp"] = datetime.now().strftime("%H:%M:%S")
+                            updated = True
+                        except Exception:
+                            inc["timestamp"] = "12:00:00"
+
+                    # Add sample appeals for Ivanova and Petrova if missing
+                    s_name = data.get("student_name", "")
+                    if "Иванов" in s_name and data.get("incidents"):
+                        inc0 = data["incidents"][0]
+                        if not inc0.get("appeal"):
+                            inc0["appeal"] = {
+                                "status": "pending",
+                                "reason": "Посмотрел на клавиатуру / в черновик",
+                                "comment": "В этот момент сверял черновик с расчетами матрицы камеры.",
+                                "submitted_at": "11:52:10",
+                                "teacher_comment": ""
+                            }
+                            updated = True
+
+                    elif "Петров" in s_name and len(data.get("incidents", [])) >= 2:
+                        inc0 = data["incidents"][0]
+                        if not inc0.get("appeal"):
+                            inc0["appeal"] = {
+                                "status": "rejected",
+                                "reason": "Ложное срабатывание (в руке был предмет, а не телефон)",
+                                "comment": "В руке был калькулятор, а не смартфон.",
+                                "submitted_at": "13:17:40",
+                                "teacher_comment": "На фотофиксации четко виден экран смартфона с включенным мессенджером."
+                            }
+                            updated = True
+
+                        inc1 = data["incidents"][1]
+                        if not inc1.get("appeal"):
+                            inc1["appeal"] = {
+                                "status": "approved",
+                                "reason": "Посмотрел на клавиатуру / в черновик",
+                                "comment": "Смотрел на клавиатуру при вводе ответа.",
+                                "submitted_at": "13:18:05",
+                                "teacher_comment": "Одобрено. Движение взгляда соответствует набору текста на клавиатуре."
+                            }
+                            updated = True
+
+                    if updated:
+                        with open(s_file, "w", encoding="utf-8") as f:
+                            json.dump(data, f, indent=2, ensure_ascii=False)
+                except Exception as e:
+                    print(f"[SessionReportManager] Error backfilling demo session: {e}")
+            return
 
         print("[SessionReportManager] Generating demo examination sessions for teacher dashboard...")
 
@@ -371,13 +590,21 @@ class SessionReportManager:
                         "type": "LOOKING_AWAY",
                         "offset_sec": 145,
                         "duration_sec": 1.8,
-                        "desc": "Непрерывный отвод головы вправо: 1.8с (порог 1.5с)"
+                        "desc": "Непрерывный отвод головы вправо: 1.8с (порог 1.5с)",
+                        "appeal": {
+                            "status": "pending",
+                            "reason": "Посмотрел на клавиатуру / в черновик",
+                            "comment": "В этот момент сверял черновик с расчетами матрицы камеры.",
+                            "submitted_at": "11:52:10",
+                            "teacher_comment": ""
+                        }
                     },
                     {
                         "type": "GAZE_AWAY",
                         "offset_sec": 380,
                         "duration_sec": 1.6,
-                        "desc": "Отвод взгляда от экрана влево: 1.6с (порог 1.5с)"
+                        "desc": "Отвод взгляда от экрана влево: 1.6с (порог 1.5с)",
+                        "appeal": None
                     }
                 ]
             },
@@ -395,25 +622,41 @@ class SessionReportManager:
                         "type": "PHONE_DETECTED",
                         "offset_sec": 95,
                         "duration_sec": 2.3,
-                        "desc": "Обнаружен смартфон в рабочей зоне (уверенность 92%)"
+                        "desc": "Обнаружен смартфон в рабочей зоне (уверенность 92%)",
+                        "appeal": {
+                            "status": "rejected",
+                            "reason": "Ложное срабатывание (в руке был предмет, а не телефон)",
+                            "comment": "В руке был калькулятор, а не смартфон.",
+                            "submitted_at": "13:17:40",
+                            "teacher_comment": "На фотофиксации четко виден экран смартфона с включенным мессенджером."
+                        }
                     },
                     {
                         "type": "LOOKING_DOWN",
                         "offset_sec": 160,
                         "duration_sec": 2.1,
-                        "desc": "Взгляд опущен вниз на колени: 2.1с"
+                        "desc": "Взгляд опущен вниз на колени: 2.1с",
+                        "appeal": {
+                            "status": "approved",
+                            "reason": "Посмотрел на клавиатуру / в черновик",
+                            "comment": "Смотрел на клавиатуру при вводе ответа.",
+                            "submitted_at": "13:18:05",
+                            "teacher_comment": "Одобрено. Движение взгляда соответствует набору текста на клавиатуре."
+                        }
                     },
                     {
                         "type": "FOCUS_LOST",
                         "offset_sec": 240,
                         "duration_sec": 4.5,
-                        "desc": "Потеря фокуса окна: попытка переключения на стороннее приложение (Alt+Tab)"
+                        "desc": "Потеря фокуса окна: попытка переключения на стороннее приложение (Alt+Tab)",
+                        "appeal": None
                     },
                     {
                         "type": "MULTIPLE_FACES",
                         "offset_sec": 310,
                         "duration_sec": 2.0,
-                        "desc": "Обнаружено второе лицо в кадре (подсказчик)"
+                        "desc": "Обнаружено второе лицо в кадре (подсказчик)",
+                        "appeal": None
                     }
                 ]
             }
@@ -435,7 +678,8 @@ class SessionReportManager:
                     "description": inc_data["desc"],
                     "timestamp": inc_time.isoformat(),
                     "details": {"duration": inc_data["duration_sec"]},
-                    "screenshot_path": ""
+                    "screenshot_path": "",
+                    "appeal": inc_data.get("appeal", None)
                 })
 
             session_dir = SessionReportManager.save_session(

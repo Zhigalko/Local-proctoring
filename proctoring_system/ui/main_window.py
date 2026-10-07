@@ -81,6 +81,7 @@ class MainWindow(QMainWindow):
         self.session_student_name = "Студент"
         self.session_start_time = datetime.now()
         self.session_incidents = []
+        self.current_session_dir = None
         self.admin_window = None
 
         # Build UI layout
@@ -345,8 +346,31 @@ class MainWindow(QMainWindow):
                 except Exception:
                     correct, total, score_pct, spent = 0, 10, 0, "00:00"
                 self._on_exam_finished(correct, total, score_pct, spent)
+            elif host == "appeal" or "appeal" in url_str:
+                inc_id = params.get("id", [""])[0]
+                reason = params.get("reason", ["Другая причина"])[0]
+                comment = params.get("comment", [""])[0]
+                self._on_student_appeal_submitted(inc_id, reason, comment)
             elif host == "restarted" or "restarted" in url_str:
                 self._on_exam_restarted()
+
+    def _on_student_appeal_submitted(self, incident_id: str, reason: str, comment: str):
+        """Processes and saves student appeal for a violation incident."""
+        print(f"[MainWindow] Student appeal received for incident {incident_id}: {reason}")
+        if hasattr(self, "current_session_dir") and self.current_session_dir:
+            from proctoring_system.reports_manager import SessionReportManager
+            appeal_data = SessionReportManager.submit_appeal(
+                self.current_session_dir,
+                incident_id,
+                reason,
+                comment
+            )
+            if appeal_data:
+                try:
+                    payload = json.dumps(appeal_data)
+                    self.web_page.runJavaScript(f"updateIncidentAppealStatus('{incident_id}', {payload});")
+                except Exception as e:
+                    print(f"[MainWindow] Error syncing appeal status to web view: {e}")
 
     def _on_exam_finished(self, correct: int = 0, total: int = 10, score_pct: int = 0, spent: str = "00:00"):
         """Silences all proctoring alerts, lock screens, archives session report, and updates UI."""
@@ -361,8 +385,9 @@ class MainWindow(QMainWindow):
 
         # Archive session report to reports/<YYYY-MM-DD_HH-MM>_<student_name>/
         try:
+            import base64
             from proctoring_system.reports_manager import SessionReportManager
-            SessionReportManager.save_session(
+            session_dir = SessionReportManager.save_session(
                 student_name=self.session_student_name,
                 start_time=self.session_start_time,
                 end_time=datetime.now(),
@@ -372,8 +397,28 @@ class MainWindow(QMainWindow):
                 time_spent=spent,
                 incidents=self.session_incidents
             )
+            self.current_session_dir = session_dir
+
+            # Load summary data with base64 encoded screenshots to display on student results screen
+            summary_data = SessionReportManager.get_session(session_dir.name)
+            if summary_data:
+                incidents_list = summary_data.get("incidents", [])
+                for inc in incidents_list:
+                    shot_rel = inc.get("screenshot", "")
+                    if shot_rel:
+                        shot_path = session_dir / shot_rel
+                        if shot_path.exists():
+                            try:
+                                with open(shot_path, "rb") as f:
+                                    b64 = base64.b64encode(f.read()).decode("utf-8")
+                                    inc["screenshot_b64"] = f"data:image/jpeg;base64,{b64}"
+                            except Exception as e:
+                                print(f"[MainWindow] Error encoding screenshot b64: {e}")
+
+                payload = json.dumps(incidents_list)
+                self.web_page.runJavaScript(f"loadExamIncidents({payload});")
         except Exception as e:
-            print(f"[MainWindow] Error archiving session report: {e}")
+            print(f"[MainWindow] Error archiving session report or loading incidents: {e}")
 
         # Stop security watcher so focus lost doesn't trigger
         if hasattr(self, "security_watcher") and self.security_watcher:
